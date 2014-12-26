@@ -7,6 +7,7 @@ from flask import Flask, render_template, request, jsonify, session
 from flask.ext.socketio import SocketIO, emit
 import urllib, json
 from random import randint
+import threading
 
 #start me up!
 app = Flask(__name__)
@@ -20,6 +21,7 @@ prizeList = []
 baddieList = []
 playerCount = 0
 canvasDim = {}
+ipList = []
 
 
 
@@ -43,9 +45,12 @@ def index():
 @socketio.on('connect', namespace='/test')
 def connectFunc():
 
+	global ipList
 	ip = request.remote_addr
+	ipList.append(ip)
 	msg = "New connection from {ip}".format(ip=ip)
 	emit('connectPush', {"msg":msg}, broadcast=True,) 
+
 
 @socketio.on('createCanvasRequest', namespace='/test')
 def createCanvasFunc(d):
@@ -79,14 +84,25 @@ def createCanvasFunc(d):
 		)
 
 	for i in range(0,25):
-		prizeList.append(
-			{"x":randint(25,d['w']),
-			"y":randint(24,d['h']),
+
+		temp = {"x":randint(100,d['w']-100),
+			"y":randint(100,d['h']-100),
 			"w":25,
 			"h":25,
 			"c":'#F2B50F',
 			}
-		)	
+
+		c = 0
+		for rect in rectList:
+			if sqOnSqCollision(temp, rect):
+				c += 1
+
+		if c==0:
+			prizeList.append(temp)
+				
+
+
+
 
 	for i in range(0,20):
 		baddieList.append(
@@ -97,6 +113,9 @@ def createCanvasFunc(d):
 			"c":'#FF69B4',
 			}
 		)	
+
+
+
 
 	circleDict = {
 		"x": 10,
@@ -120,6 +139,12 @@ def keypressFunc(d):
 
 	global ipDict
 	global rectList
+	global prizeList
+
+	if not prizeList:
+		refreshGlobals()
+		msg = "Global variables refreshed."
+		emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
 
 	ip = request.remote_addr
 	
@@ -152,8 +177,6 @@ def keypressFunc(d):
 				# ipDict[ip]['circleDict']['x'] -= d['dx']
 				# ipDict[ip]['circleDict']['y'] -= d['dy']
 
-
-
 				if d['dx'] != 0:
 					sign = d['dx']/abs(d['dx'])
 					ipDict[ip]['circleDict']['x'] -= sign
@@ -170,12 +193,21 @@ def keypressFunc(d):
 			c = ipDict[ip].get('score', 0)
 			ipDict[ip]['score'] = c + 1
 
+
+
 	# create collison for prizes
 	for index, baddie in enumerate(baddieList):
 
 		if collision(ipDict[ip]['circleDict'], baddie):
 			baddieList.pop(index)
 			ipDict[ip]['circleDict']['r'] -= 4 
+
+			if ipDict[ip]['circleDict']['r'] <= 0:
+
+				refreshGlobals()
+
+				msg = "Global variables refreshed."
+				emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
 
 
 		# baddie['x'] += randint(-10,10)
@@ -191,6 +223,13 @@ def keypressFunc(d):
 @socketio.on('refreshGlobalsRequest', namespace='/test')
 def refreshGlobalsFunc(d):
 
+	refreshGlobals()
+	msg = "Global variables refreshed."
+	emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
+
+
+def refreshGlobals():
+
 	global ipDict
 	global rectList
 	global playerCount
@@ -203,43 +242,6 @@ def refreshGlobalsFunc(d):
 	baddieList = []
 	playerCount = 0
 
-	msg = "Global variables refreshed."
-
-	emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
-
-
-@socketio.on('incrementBagGuysPositionRequest', namespace='/test')
-def refreshGlobalsFunc(d):
-
-	global baddieList
-	global ipDict
-
-	ip = request.remote_addr
-
-	if ip == ipDict.keys()[0]:
-
-		for index, baddie in enumerate(baddieList):
-
-			if collision(ipDict[ip]['circleDict'], baddie):
-				baddieList.pop(index)
-				ipDict[ip]['circleDict']['r'] -= 4 
-
-			dy = randint(0,20)
-			dx = randint(0,20)
-			baddie['x'] += randint(-dx,dx)
-			baddie['y'] += randint(-dx,dx)
-
-			# create boundaries for player on rectangles
-			for rect in rectList:
-				if sqOnSqCollision(baddie, rect):
-					baddie['x'] -= dx
-					baddie['y'] -= dy
-
-
-		# msg = "Global variables refreshed."
-
-		emit('incrementBagGuysPositionPush', {"ipDict": ipDict, "baddieList":baddieList}, broadcast=True,) 
-
 
 def sqOnSqCollision(rect1, rect2):
 
@@ -247,7 +249,6 @@ def sqOnSqCollision(rect1, rect2):
 	   rect1['x'] + rect1['w'] > rect2['x'] and \
 	   rect1['y'] < rect2['y'] + rect2['h'] and \
 	   rect1['h'] + rect1['y'] > rect2['y']
-
 
 
 def collision(circle, rect):
@@ -270,6 +271,49 @@ def collision(circle, rect):
 
 		return dx * dx + dy * dy <= (circle['r'] * circle['r'])
 
+@socketio.on('incrementBagGuysPositionRequest', namespace='/test')
+def incrementBagGuysPositionFunc(d):
+
+	global baddieList
+	global ipDict
+	global ipList
+
+	ip = request.remote_addr
+
+	if ip == ipList[0]:
+
+		for index, baddie in enumerate(baddieList):
+
+			if collision(ipDict[ip]['circleDict'], baddie):
+				baddieList.pop(index)
+				ipDict[ip]['circleDict']['r'] -= 4 
+
+				if ipDict[ip]['circleDict']['r'] <= 0:
+
+					global rectList
+					global playerCount
+					global prizeList
+
+					ipDict = {}
+					rectList = []
+					prizeList = []
+					baddieList = []
+					playerCount = 0
+					msg = "Global variables refreshed."
+					emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
+
+			dy = randint(0,20)
+			dx = randint(0,20)
+			baddie['x'] += randint(-dx,dx)
+			baddie['y'] += randint(-dx,dx)
+
+			# create boundaries for player on rectangles
+			for rect in rectList:
+				if sqOnSqCollision(baddie, rect):
+					baddie['x'] -= dx
+					baddie['y'] -= dy
+
+		emit('incrementBagGuysPositionPush', {"ipDict": ipDict, "baddieList":baddieList, "ip": ip}, broadcast=True,) 
 
 
 

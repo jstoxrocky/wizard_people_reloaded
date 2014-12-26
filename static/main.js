@@ -59,15 +59,15 @@ function createCanvas(rL,pL,bL,ipDict,ip) {
 	baddieList = bL
 	// circle = cD
 
-	
 	draw(ipDict);
-	badGuysMove();
+	// socket.emit('incrementBagGuysPositionRequest');
+	
 }
 
 
 
 
-
+badGuysMove();
 
 
 
@@ -77,8 +77,6 @@ socket.on('keypressPush', function(d) {
 	baddieList = d.baddieList;
     x = d.ipDict[d.ip]['circleDict']['x'];
     y = d.ipDict[d.ip]['circleDict']['y'];
-
-    // draw(d.x,d.y,d.ipDict,d.ip);
     draw(d.ipDict);
 
 });
@@ -166,31 +164,39 @@ function draw(ipDict) {
 }
 
 
-$(document).keypress(function(e) {
-	  
+
+
+
+$(document).keydown(function(e) {
+	 
+
+
 		x = 0;
 		y = 0;
 		stepSize = 20;
 
-		if(e.which ==  110) {
+		// console.log(e.which);
+
+		//n 110
+		if(e.which ==  78) {
 			socket.emit('refreshGlobalsRequest', {});
 		}
 		else {
 
-			//w
-			if(e.which == 119) {
+			//w 119
+			if(e.which == 87) {
 				y -= stepSize
 			}
-			//a
-			if(e.which == 97) {
+			//a 97
+			if(e.which == 65) {
 				x -= stepSize
 			}
-			//s
-			if(e.which == 115) {
+			//s 115
+			if(e.which == 83) {
 				y += stepSize
 			}
-			//d
-			if(e.which == 100) {
+			//d 100
+			if(e.which == 68) {
 				x += stepSize
 			}
 			socket.emit('keypressRequest', {"dx": x, "dy": y});
