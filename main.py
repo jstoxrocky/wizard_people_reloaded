@@ -216,27 +216,29 @@ def refreshGlobalsFunc(d):
 
 	ip = request.remote_addr
 
-	for index, baddie in enumerate(baddieList):
+	if ip == ipDict.keys()[0]:
 
-		if collision(ipDict[ip]['circleDict'], baddie):
-			baddieList.pop(index)
-			ipDict[ip]['circleDict']['r'] -= 4 
+		for index, baddie in enumerate(baddieList):
 
-		dy = randint(0,20)
-		dx = randint(0,20)
-		baddie['x'] += randint(-dx,dx)
-		baddie['y'] += randint(-dx,dx)
+			if collision(ipDict[ip]['circleDict'], baddie):
+				baddieList.pop(index)
+				ipDict[ip]['circleDict']['r'] -= 4 
 
-		# create boundaries for player on rectangles
-		for rect in rectList:
-			if sqOnSqCollision(baddie, rect):
-				baddie['x'] -= dx
-				baddie['y'] -= dy
+			dy = randint(0,20)
+			dx = randint(0,20)
+			baddie['x'] += randint(-dx,dx)
+			baddie['y'] += randint(-dx,dx)
+
+			# create boundaries for player on rectangles
+			for rect in rectList:
+				if sqOnSqCollision(baddie, rect):
+					baddie['x'] -= dx
+					baddie['y'] -= dy
 
 
-	# msg = "Global variables refreshed."
+		# msg = "Global variables refreshed."
 
-	emit('incrementBagGuysPositionPush', {"ipDict": ipDict, "baddieList":baddieList}, broadcast=True,) 
+		emit('incrementBagGuysPositionPush', {"ipDict": ipDict, "baddieList":baddieList}, broadcast=True,) 
 
 
 def sqOnSqCollision(rect1, rect2):
