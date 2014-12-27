@@ -15,7 +15,7 @@ socket.on('refreshGlobalsPush', function(d) {
     location.reload();
 });
 
-socket.emit('createCanvasRequest', {"w":document.body.clientWidth, "h":document.body.clientHeight});
+socket.emit('createCanvasRequest', {"w":document.body.clientWidth, "h":document.body.clientHeight*2});
 
 var ipDict;
 
@@ -52,7 +52,7 @@ function createCanvas(rL,pL,bL,ipDict,ip) {
 	//create full screen canvas
 	canvas = document.getElementById("canvas");
 	canvas.width = document.body.clientWidth;
-	canvas.height = document.body.clientHeight;
+	canvas.height = document.body.clientHeight*2;
 	ctx = canvas.getContext("2d");
 	rectList = rL
 	prizeList = pL
@@ -118,6 +118,7 @@ function draw(ipDict) {
 		y = circle['y']
 		r = circle['r']
 		c = circle['c']
+		textColor = ipDict[Object.keys(ipDict)[i]]['color']
 
 			ctx.fillStyle = c;
 			ctx.beginPath();
@@ -144,7 +145,7 @@ function draw(ipDict) {
 
 
 			textToPrint = score + " "
-	    	ctx.fillStyle = c;
+	    	ctx.fillStyle = textColor;
 		  	ctx.font = "bold 50px Arial";
 		  	ctx.fillText(textToPrint, 20 + offset, canvas.height - 20);
 		  	offset += 100
@@ -165,8 +166,12 @@ function draw(ipDict) {
 
 
 
+$(document).keydown(function(e) {
 
 
+})
+
+var mult;
 $(document).keydown(function(e) {
 	 
 
@@ -181,6 +186,19 @@ $(document).keydown(function(e) {
 		if(e.which ==  78) {
 			socket.emit('refreshGlobalsRequest', {});
 		}
+		//l 76
+		if(e.which == 76) {
+
+			if (!mult) {
+		        mult = true;
+		        console.log(e.which);
+		        setTimeout(function() {
+		            mult = false;
+		        }, 500)
+		        socket.emit('attackRequest', {});
+		    }
+    	}
+			
 		else {
 
 			//w 119
@@ -200,10 +218,12 @@ $(document).keydown(function(e) {
 				x += stepSize
 			}
 			socket.emit('keypressRequest', {"dx": x, "dy": y});
+
+
+
 		}
 
 
-		
 
 });
 
