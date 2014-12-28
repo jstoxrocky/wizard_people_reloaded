@@ -82,9 +82,30 @@ def createCanvasFunc(d):
 	canvasDim['w'] = d['w']
 	canvasDim['h'] = d['h']
 
-	colorList = ['#999999','#35373b', '#8C8C8C', '#212121', "#4f4f4f"]
+	# colorList = ['#999999','#35373b', '#8C8C8C', '#212121', "#4f4f4f"]
 	googleColorList = ['#0266C8', '#F90101', '#F2B50F', '#00933B']
 	
+
+	
+	levelList = ['cave', 'grassy', 'icy']
+	levelNum = randint(0,len(levelList)-1)
+
+	if levelList[levelNum] == 'grassy':
+		colorList = ['#999999','#35373b', '#8C8C8C', '#212121', "#4f4f4f"]
+		bgcolor = '#86C67C'
+		baddieColor = '#87421F'
+	elif levelList[levelNum] == 'cave':
+		# colorList = ['#2F4F4F','#607B8B','#6C7B8B','#42526C','#2F2F4F']
+		colorList = ['#42526C','#35373b', '#2F4F4F', '#212121', "#4f4f4f"]
+		bgcolor = '#8C8C8C'
+		baddieColor = '#86C67C'
+	elif levelList[levelNum] == 'icy':
+		colorList = ['#BFEFFF','#35373b', '#82CFFD', '#212121', "#4f4f4f"]
+		bgcolor = '#FFFAFA'
+		baddieColor = '#e5e1e1'
+
+
+
 	# print('rect') #91022
 	# print(d['w']*d['h']/9)
 	# print('prize') #32768
@@ -131,7 +152,7 @@ def createCanvasFunc(d):
 			"y":randint(0,d['h']),
 			"w":25,
 			"h":25,
-			"c":'#FF69B4',
+			"c":baddieColor,
 			}
 
 		c = 0
@@ -170,7 +191,7 @@ def createCanvasFunc(d):
 	
 
 	msg = "New canvas request from {ip}".format(ip=ip)
-	emit('createCanvasPush', {"msg":msg, "rectList":rectList, "prizeList":prizeList, "baddieList":baddieList, "circleDict": circleDict, "ipDict": ipDict, "ip":ip}, broadcast=True,) 
+	emit('createCanvasPush', {"msg":msg, "rectList":rectList, "prizeList":prizeList, "baddieList":baddieList, "circleDict": circleDict, "ipDict": ipDict, "ip":ip, 'bgcolor':bgcolor}, broadcast=True,) 
 
 @socketio.on('keypressRequest', namespace='/test')
 def keypressFunc(d):
@@ -210,15 +231,47 @@ def keypressFunc(d):
 	for rect in rectList:
 		if collision(ipDict[ip]['circleDict'], rect):
 
-			while collision(ipDict[ip]['circleDict'], rect):
+			if ipDict[ip]['state'] == 'rest': #janky hack to fix endless loop
+				
+				tempDict = ipDict[ip]['circleDict'].copy()
+				tempdy = 0
+				tempdx = 0
 
 				if d['dx'] != 0:
-					sign = d['dx']/abs(d['dx'])
-					ipDict[ip]['circleDict']['x'] -= sign
-				else:
-					sign = d['dy']/abs(d['dy'])
-					ipDict[ip]['circleDict']['y'] -= sign
+					tempDict['x'] = tempDict['x'] - d['dx']
+					if not collision(tempDict, rect):
+						# print('allow movement in y direction')
+						tempDict['x'] = tempDict['x'] + d['dx']
+						tempdy = d['dy']
+				
+				if d['dy'] != 0:
+					tempDict['y'] = tempDict['y'] - d['dy']
+					if not collision(tempDict, rect):
+						# print('allow movement in x direction')
+						tempDict['y'] = tempDict['y'] + d['dy']
+						tempdx = d['dx']
 
+				while collision(ipDict[ip]['circleDict'], rect):
+
+					if d['dx'] == 0:
+						#y collision only
+						signx = 0
+					else:
+						signx = d['dx']/abs(d['dx'])
+					
+					
+					if d['dy'] == 0:
+						#x collision only
+						signy = 0
+					else:
+						signy = d['dy']/abs(d['dy'])
+
+					
+					ipDict[ip]['circleDict']['y'] -= signy
+					ipDict[ip]['circleDict']['x'] -= signx
+
+				ipDict[ip]['circleDict']['y'] += tempdy
+				ipDict[ip]['circleDict']['x'] += tempdx
 
 
 	#create collison for prizes
@@ -248,15 +301,7 @@ def keypressFunc(d):
 					msg = "Global variables refreshed."
 					emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
 
-		# elif collision(ipDict[ip]['circleDict'], baddie) and ipDict[ip]['state'] == 'attack':
-		# 		print('hi')
-		# 		baddieList.pop(index)
 
-		# baddie['x'] += randint(-10,10)
-		# baddie['y'] += randint(-10,10)
-
-
-			# baddieList.pop(index)
 
 
 
@@ -329,6 +374,7 @@ def refreshGlobals():
 	global prizeList
 	global baddieList
 	global uidCount
+	global ipList
 
 	ipDict = {}
 	rectList = []
@@ -336,6 +382,7 @@ def refreshGlobals():
 	baddieList = []
 	playerCount = 0
 	uidCount = 0
+	ipList = []
 
 
 def sqOnSqCollision(rect1, rect2):
@@ -399,29 +446,46 @@ def incrementBagGuysPositionFunc(d):
 	global playerCount
 
 
+
+
 	# ip = request.remote_addr
 	ip = session['uid']
 
 	# for _ip in ipDict.keys():
-	ipDict[ip]['circleDict']['c'] = ipDict[ip]['color']
-	ipDict[ip]['circleDict']['r'] = ipDict[ip]['radius']
-	ipDict[ip]['state'] = 'rest'
+
+	#return vars to normal after attack etc
+	if ipDict[ip]['circleDict']['r'] > ipDict[ip]['radius'] and ipDict[ip]['state'] == 'attack':
+		# print(ipDict[ip]['circleDict']['r'])
+		# print(ipDict[ip]['radius'])
+		ipDict[ip]['circleDict']['r'] -=  10
+	else:
+
+		ipDict[ip]['circleDict']['c'] = ipDict[ip]['color']
+		ipDict[ip]['circleDict']['r'] = ipDict[ip]['radius']
+		ipDict[ip]['state'] = 'rest'
 
 
 
 
 
-
+	# print(ip)
+	# print(ipDict[ip]['circleDict']['r'])
 	if ip == ipList[0]:
+
 
 		for index, baddie in enumerate(baddieList):
 
+			# for _ip in ipDict.keys():
+
+
 			if collision(ipDict[ip]['circleDict'], baddie) and ipDict[ip]['state'] == 'rest':
+				
+				# print('here')
+
 				baddieList.pop(index)
 				
 				# ipDict[ip]['circleDict']['r'] -= 4 
 				ipDict[ip]['radius'] -= 4 
-
 
 				# if ipDict[ip]['circleDict']['r'] <= 0:
 				if ipDict[ip]['radius'] <= 0:
@@ -434,30 +498,76 @@ def incrementBagGuysPositionFunc(d):
 						emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
 
 
+			#identify if circle is near
+			targetList = []
+			for _ip in ipList:
+				xdif = baddie['x'] - ipDict[_ip]['circleDict']['x']
+				ydif = baddie['y'] - ipDict[_ip]['circleDict']['y']
+				eucDist = (xdif**2 + ydif**2)**0.5
+				if eucDist < 200:
+					targetList.append(_ip)
 
+			if targetList:
+				targetList.sort()
+				target_ip = targetList[0]
+				xdif = baddie['x'] - ipDict[target_ip]['circleDict']['x']
+				ydif = baddie['y'] - ipDict[target_ip]['circleDict']['y']
+				if xdif > 0:
+					ddx = -(4 + randint(0,2))
+				else:
+					ddx = (4 + randint(0,2))
 
-
+				if ydif > 0:
+					ddy = -(4 + randint(0,2))
+				else:
+					ddy = (4 + randint(0,2))
 			
-			dx = randint(0,20)
-			dy = randint(0,20)
+			else:
 
-			ddx = randint(-dx,dx)
-			ddy = randint(-dy,dy)
+				dx = randint(0,5)
+				dy = randint(0,5)
 
-			if ddx == 0: 
-				ddx += 1
-			if ddy == 0:
-				ddy += 1
+				ddx = randint(-dx,dx)
+				ddy = randint(-dy,dy)
+
+				if ddx == 0: 
+					ddx += 1
+				if ddy == 0:
+					ddy += 1
 
 			baddie['x'] += ddx
 			baddie['y'] += ddy
 
 			# create boundaries for player on rectangles
+
+
+
+
+
 			for rect in rectList:
 				if sqOnSqCollision(baddie, rect):
 
-						baddie['x'] -= ddx
-						baddie['y'] -= ddy
+
+					tempDict = baddie.copy()
+					tempdy = 0
+					tempdx = 0
+
+					if ddx != 0:
+						tempDict['x'] = tempDict['x'] - ddx
+						if not sqOnSqCollision(tempDict, rect):
+							# print('allow movement in y direction')
+							tempDict['x'] = tempDict['x'] + ddx
+							tempdy = ddy
+					
+					if ddy != 0:
+						tempDict['y'] = tempDict['y'] - ddy
+						if not sqOnSqCollision(tempDict, rect):
+							# print('allow movement in x direction')
+							tempDict['y'] = tempDict['y'] + ddy
+							tempdx = ddx
+
+						baddie['x'] -= ddx - tempdx
+						baddie['y'] -= ddy - tempdy
 
 			if (baddie['x'] < 0 or baddie['x'] > canvasDim['w']):
 				baddie['x'] -= ddx

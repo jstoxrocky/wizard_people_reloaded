@@ -15,12 +15,13 @@ socket.on('refreshGlobalsPush', function(d) {
     location.reload();
 });
 
-socket.emit('createCanvasRequest', {"w":document.body.clientWidth, "h":document.body.clientHeight*2});
+socket.emit('createCanvasRequest', {"w":document.body.clientWidth, "h":document.body.clientHeight});
 
 var ipDict;
 
 socket.on('createCanvasPush', function(d) {
     console.log(d.msg);
+    $("body").css({"backgroundColor":d['bgcolor']});
     createCanvas(d.rectList, d.prizeList, d.baddieList, d.ipDict, d.ip);
 
 });
@@ -52,7 +53,7 @@ function createCanvas(rL,pL,bL,ipDict,ip) {
 	//create full screen canvas
 	canvas = document.getElementById("canvas");
 	canvas.width = document.body.clientWidth;
-	canvas.height = document.body.clientHeight*2;
+	canvas.height = document.body.clientHeight;
 	ctx = canvas.getContext("2d");
 	rectList = rL
 	prizeList = pL
@@ -166,32 +167,45 @@ function draw(ipDict) {
 
 
 
-$(document).keydown(function(e) {
 
 
-})
+// var timer = null;
+
+// function doStuff(x,y) {
+//     socket.emit('keypressRequest', {"dx": x, "dy": y});
+//     // console.log(x);
+// }
+
+
+var keyState = {};    
+window.addEventListener('keydown',function(e){
+	// console.log(e.which);
+    keyState[e.keyCode || e.which] = true;
+},true);    
+window.addEventListener('keyup',function(e){
+    keyState[e.keyCode || e.which] = false;
+},true);
+
+// x = 100;
+
+
 
 var mult;
-$(document).keydown(function(e) {
-	 
+// $(document).keydown(function(e) {
+function gameLoop() {
+	
 
-
-		x = 0;
-		y = 0;
-		stepSize = 20;
-
-		// console.log(e.which);
+		
 
 		//n 110
-		if(e.which ==  78) {
+		if(keyState[78]) {
 			socket.emit('refreshGlobalsRequest', {});
 		}
-		//l 76
-		if(e.which == 76) {
+		//l 76 space 32
+		if(keyState[32]) {
 
 			if (!mult) {
 		        mult = true;
-		        console.log(e.which);
 		        setTimeout(function() {
 		            mult = false;
 		        }, 500)
@@ -201,37 +215,38 @@ $(document).keydown(function(e) {
 			
 		else {
 
-			//w 119
-			if(e.which == 87) {
-				y -= stepSize
-			}
-			//a 97
-			if(e.which == 65) {
-				x -= stepSize
-			}
-			//s 115
-			if(e.which == 83) {
-				y += stepSize
-			}
-			//d 100
-			if(e.which == 68) {
-				x += stepSize
-			}
-			socket.emit('keypressRequest', {"dx": x, "dy": y});
 
 
+				x = 0;
+				y = 0;
+				stepSize = 4;
+
+				//w 119
+				if(keyState[87]) {
+					y -= stepSize
+				}
+				//a 97
+				if(keyState[65]) {
+					x -= stepSize
+				}
+				// s 115
+				if(keyState[83]){
+					y += stepSize
+				}
+				// d 100
+				if(keyState[68]) {
+					x += stepSize
+				}
+
+				socket.emit('keypressRequest', {"dx": x, "dy": y});
 
 		}
 
+		setTimeout(gameLoop, 10);
+}
+// });
 
-
-});
-
-
-
-
-
-
+gameLoop();
 
 
 // 	// $('#form').submit(function(event) {
@@ -319,4 +334,8 @@ $(document).keydown(function(e) {
 
 // drawFractalTree(context, 500, 500); 
 // drawFractalTree(context, 300, 400); 
+
+
+
+
 
