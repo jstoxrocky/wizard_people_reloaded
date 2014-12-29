@@ -20,7 +20,7 @@ socket.emit('createCanvasRequest', {"w":document.body.clientWidth, "h":document.
 var ipDict;
 
 socket.on('createCanvasPush', function(d) {
-    console.log(d.msg);
+    // console.log(d.msg);
     $("body").css({"backgroundColor":d['bgcolor']});
     createCanvas(d.rectList, d.prizeList, d.baddieList, d.ipDict, d.ip);
 
@@ -36,10 +36,10 @@ var prizeList;
 var baddieList; 
 
 
-function badGuysMove() {
-	socket.emit('incrementBagGuysPositionRequest', {});
-	var loopTimer = setTimeout(badGuysMove, 100);
-}
+// function badGuysMove() {
+// 	socket.emit('incrementBagGuysPositionRequest', {});
+// 	var loopTimer = setTimeout(badGuysMove, 100);
+// }
 
 socket.on('incrementBagGuysPositionPush', function(d) {
     baddieList = d.baddieList;
@@ -68,7 +68,7 @@ function createCanvas(rL,pL,bL,ipDict,ip) {
 
 
 
-badGuysMove();
+// badGuysMove();
 
 
 
@@ -76,8 +76,8 @@ socket.on('keypressPush', function(d) {
 
 	prizeList = d.prizeList;
 	baddieList = d.baddieList;
-    x = d.ipDict[d.ip]['circleDict']['x'];
-    y = d.ipDict[d.ip]['circleDict']['y'];
+    x = d.ipDict[d.ip]['x']//['playerDict']['x'];
+    y = d.ipDict[d.ip]['y']//['playerDict']['y'];
     draw(d.ipDict);
 
 });
@@ -93,45 +93,152 @@ function draw(ipDict) {
 	//clear canvas
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+	var coin = new Image();
+	var ruby = new Image();
+
+
+	var goblin_left = new Image();
+	var goblin_right = new Image();
+
+	var wizard_red_left = new Image();
+	var wizard_red_right = new Image();
+	var wizard_blu_left = new Image();
+	var wizard_blu_right = new Image();
+	var wizard_gre_left = new Image();
+	var wizard_gre_right = new Image();
+	var wizard_yel_left = new Image();
+	var wizard_yel_right = new Image();
+	
+
+	coin.src = "static/images/coin.png";
+	ruby.src = "static/images/ruby.png";
+
+	goblin_left.src = "static/images/goblin_left.png";
+	goblin_right.src = "static/images/goblin_right.png";
+
+	wizard_red_left.src = "static/images/wiz_red_left.png";
+	wizard_red_right.src = "static/images/wiz_red_right.png";
+	wizard_blu_left.src = "static/images/wiz_blu_left.png";
+	wizard_blu_right.src = "static/images/wiz_blu_right.png";
+	wizard_gre_left.src = "static/images/wiz_gre_left.png";
+	wizard_gre_right.src = "static/images/wiz_gre_right.png";
+	wizard_yel_left.src = "static/images/wiz_yel_left.png";
+	wizard_yel_right.src = "static/images/wiz_yel_right.png";
+
+
+	wizColorDict = {"red":[wizard_red_left,wizard_red_right],
+					"blu":[wizard_blu_left,wizard_blu_right],
+					"gre":[wizard_gre_left,wizard_gre_right],
+					"yel":[wizard_yel_right,wizard_yel_right],
+					}
+
+	// coin.onload = function() {
+		
+	// }
+
 	for (i = 0; i < rectList.length; i++) { 
 		ctx.fillStyle = rectList[i].c;
 		ctx.fillRect(rectList[i].x, rectList[i].y, rectList[i].w, rectList[i].h);
 	}
 
 	for (i = 0; i < prizeList.length; i++) { 
-		ctx.fillStyle = prizeList[i].c;
-		ctx.fillRect(prizeList[i].x, prizeList[i].y, prizeList[i].w, prizeList[i].h);
+		// ctx.fillStyle = prizeList[i].c;
+		// ctx.fillRect(prizeList[i].x, prizeList[i].y, prizeList[i].w, prizeList[i].h);
+
+		if (i % 7 == 0) {
+			ctx.drawImage(ruby, prizeList[i].x, prizeList[i].y, prizeList[i].w, prizeList[i].h);
+		}
+		else{
+			ctx.drawImage(coin, prizeList[i].x, prizeList[i].y, prizeList[i].w, prizeList[i].h);
+		}
+	
 	}
 
 	for (i = 0; i < baddieList.length; i++) { 
-		ctx.fillStyle = baddieList[i].c;
-		ctx.fillRect(baddieList[i].x, baddieList[i].y, baddieList[i].w, baddieList[i].h);
+		// ctx.fillStyle = baddieList[i].c;
+		// ctx.fillRect(baddieList[i].x, baddieList[i].y, baddieList[i].w, baddieList[i].h);
+		if (baddieList[i]['dx']>=0){
+			image = goblin_right;
+		}
+		else{
+			image = goblin_left;
+		}
+
+		ctx.drawImage(image, baddieList[i].x, baddieList[i].y, baddieList[i].w, baddieList[i].h);
 	}
 
 	offset = 0
 	for (i = 0; i < Object.keys(ipDict).length; i++) { 
 
+
+
+
 		ip = Object.keys(ipDict)[i]
-		circle = ipDict[Object.keys(ipDict)[i]]['circleDict']
+		circle = ipDict[Object.keys(ipDict)[i]]//['playerDict']
 		dx = circle['dx']
 		dy = circle['dy']
 		x = circle['x']
 		y = circle['y']
-		r = circle['r']
-		c = circle['c']
-		textColor = ipDict[Object.keys(ipDict)[i]]['color']
+		// r = circle['r']
+		w = circle['w']
+		h = circle['h']
 
-			ctx.fillStyle = c;
+		// w = ipDict[Object.keys(ipDict)[i]]['radius']
+		// h = ipDict[Object.keys(ipDict)[i]]['radius']
+
+		// c = circle['c']
+		state = circle['state']
+		r = circle['r']
+
+		cx = x + w/2
+		cy = y + h/2
+
+		// console.log(circle['id']);
+		// var col;
+		if (circle['id'] == 0){
+			col = 'blu';
+		}
+		if (circle['id'] == 1){
+			col = 'red';
+		}
+		if (circle['id'] == 2){
+			col = 'gre';
+		}
+		if (circle['id'] == 3){
+			col = 'yel';
+		}
+
+		// console.log(col);
+
+
+		textColor = ipDict[Object.keys(ipDict)[i]]['c']//['playerDict']['c']
+
+			ctx.fillStyle = '#CD96CD';
 			ctx.beginPath();
 			ctx.arc(
-				x,
-				y,
+				cx,
+				cy,
 				r,
 				0, 
 				Math.PI * 2
 			);
 			ctx.closePath();
 			ctx.fill();
+
+			if (dx>=0){
+				// console.log(dx);
+				wiz_image = wizColorDict[col][1];
+			}
+			else if (dx<0){
+				// console.log(dx);
+				wiz_image = wizColorDict[col][0];
+			}
+			else {
+				wiz_image = wizColorDict[col][0];
+			}
+
+
+			ctx.drawImage(wiz_image, x, y, w, h);
 
 			
 			// textToPrint = Object.keys(ipDict)[i] + ": " + ipDict[Object.keys(ipDict)[i]]['score'] + ", "
@@ -191,6 +298,7 @@ window.addEventListener('keyup',function(e){
 
 
 var mult;
+var gameCount=1;
 // $(document).keydown(function(e) {
 function gameLoop() {
 	
@@ -242,7 +350,18 @@ function gameLoop() {
 
 		}
 
-		setTimeout(gameLoop, 10);
+		setTimeout(gameLoop, 20);
+
+		gameCount = gameCount + 1;
+
+		if (gameCount == 5){
+			socket.emit('incrementBagGuysPositionRequest', {});
+			gameCount = 1
+		}
+
+
+		// socket.emit('incrementBagGuysPositionRequest', {});
+		// var loopTimer = setTimeout(badGuysMove, 100);
 }
 // });
 
