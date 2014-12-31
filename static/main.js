@@ -6,6 +6,7 @@ var ctx;
 var rectList;
 var prizeList; 
 var baddieList; 
+var bonesList; 
 
 var coin = new Image();
 var ruby = new Image();
@@ -19,6 +20,7 @@ var wizard_gre_left = new Image();
 var wizard_gre_right = new Image();
 var wizard_yel_left = new Image();
 var wizard_yel_right = new Image();
+var bones = new Image();
 
 coin.src = "static/images/coin.png";
 ruby.src = "static/images/ruby.png";
@@ -32,6 +34,7 @@ wizard_gre_left.src = "static/images/wiz_gre_left.png";
 wizard_gre_right.src = "static/images/wiz_gre_right.png";
 wizard_yel_left.src = "static/images/wiz_yel_left.png";
 wizard_yel_right.src = "static/images/wiz_yel_right.png";
+bones.src = "static/images/bones.png";
 
 var wizColorDict = {"red":[wizard_red_left,wizard_red_right],
 					"blu":[wizard_blu_left,wizard_blu_right],
@@ -189,6 +192,7 @@ socket.on('createCanvasPush', function(d) {
 //game loop Push
 socket.on('incrementBagGuysPositionPush', function(d) {
     baddieList = d.baddieList;
+    bonesList = d.bonesList;
     ipDict = d.ipDict;
     draw();
 });
@@ -198,6 +202,7 @@ socket.on('keypressPush', function(d) {
 
 	prizeList = d.prizeList;
 	baddieList = d.baddieList;
+	bonesList = d.bonesList;
     ipDict = d.ipDict;
     draw();
 
@@ -241,18 +246,29 @@ function draw() {
 	
 	}
 
+	//bones
+	for (i = 0; i < bonesList.length; i++) { 
+		
+		image = bones;
+
+		ctx.drawImage(image, bonesList[i].x, bonesList[i].y, 25, 25);
+	}
+
 	//baddies
 	for (i = 0; i < baddieList.length; i++) { 
 		
-		if (baddieList[i]['dx']>=0){
-			image = goblin_right;
-		}
-		else{
-			image = goblin_left;
-		}
+
+			if (baddieList[i]['dx']>=0){
+				image = goblin_right;
+			}
+			else{
+				image = goblin_left;
+			}
 
 		ctx.drawImage(image, baddieList[i].x, baddieList[i].y, baddieList[i].w, baddieList[i].h);
 	}
+
+
 
 	//players
 	offset = 0

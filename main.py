@@ -20,6 +20,7 @@ socketio = SocketIO(app)
 ipDict = {}
 rectList = []
 prizeList = []
+bonesList = []
 baddieList = []
 canvasDim = {}
 uidCount = 0
@@ -117,11 +118,13 @@ def createCanvasFunc(d):
 	global prizeList
 	global baddieList
 	global canvasDim
+	global bonesList
 
 	#need to restart these vars each time someone joins
 	rectList = []
 	prizeList = []
 	baddieList = []
+	bonesList = []
 
 	ip = session['uid']
 	canvasDim['w'] = d['w']
@@ -151,8 +154,8 @@ def createCanvasFunc(d):
 	rectNum = d['w']*d['h']/91022
 	for i in range(0,rectNum):
 		rectList.append(
-			{"x":randint(0,d['w']),
-			"y":randint(0,d['h']),
+			{"x":randint(100,d['w']-100),
+			"y":randint(000,d['h']-100),
 			"w":randint(50,d['w']/2),
 			"h":randint(50,d['h']/2),
 			"c":colorList[randint(0,len(colorList)-1)],
@@ -194,6 +197,7 @@ def createCanvasFunc(d):
 			"h":35,
 			"c":baddieColor,
 			"dir":baddieDirList[randint(0,1)],
+			"action": 'patrol',
 			}
 
 		c = 0
@@ -242,7 +246,7 @@ def keypressFunc(d):
 		# ipDict[ip] = collisionWithBaddie(ipDict[ip], baddie, i, ip)
 		collisionWithBaddie(ipDict[ip], baddie, i, ip)
 
-	emit('keypressPush', {"ipDict":ipDict, "ip":ip, "prizeList":prizeList, "baddieList":baddieList}, broadcast=True,) 
+	emit('keypressPush', {"ipDict":ipDict, "ip":ip, "prizeList":prizeList, "baddieList":baddieList, "bonesList":bonesList}, broadcast=True,) 
 
 
 
@@ -253,6 +257,7 @@ def attackFunc(d):
 	global ipDict
 	# global prizeList
 	global baddieList
+	global bonesList
 
 	ip = session['uid']
 
@@ -265,8 +270,9 @@ def attackFunc(d):
 
 	for index, baddie in enumerate(baddieList):
 		if collision(auraDict, baddie) and ipDict[ip]['state'] == 'attack':
+			bonesList.append({'x':baddie['x'],'y':baddie['y']})
 			baddieList.pop(index)
-			
+
 
 
 
@@ -277,19 +283,11 @@ def attackFunc(d):
 
 			if collision(auraDict, ipDict[eachip]) and ipDict[ip]['state'] == 'attack':
 
-				# ipDict[eachip]['w'] -= 10
-				# ipDict[eachip]['h'] -= 10
-
-				# if ipDict[eachip]['w'] <= 0:
-				# 	ipDict.pop(eachip, None)
-				# 	# playerList.pop(eachip)
-
 				getHurt(ipDict[eachip], eachip)
 
-	# print(ipDict)
 
 
-	emit('keypressPush', {"ipDict":ipDict, "ip":ip, "prizeList":prizeList, "baddieList":baddieList}, broadcast=True,) 
+	emit('keypressPush', {"ipDict":ipDict, "ip":ip, "prizeList":prizeList, "baddieList":baddieList, "bonesList":bonesList}, broadcast=True,) 
 
 
 
@@ -298,6 +296,7 @@ def incrementBagGuysPositionFunc(d):
 
 	global baddieList
 	global ipDict
+	global bonesList
 
 	ip = session['uid']
 
@@ -349,7 +348,7 @@ def incrementBagGuysPositionFunc(d):
 
 
 
-		emit('incrementBagGuysPositionPush', {"ipDict": ipDict, "baddieList":baddieList, "ip": ip}, broadcast=True,) 
+		emit('incrementBagGuysPositionPush', {"ipDict": ipDict, "baddieList":baddieList, "bonesList": bonesList}, broadcast=True,) 
 
 
 
@@ -393,24 +392,24 @@ def getChaseDirection(baddie):
 	
 	else:
 
-		#random movement
+		if baddie['action'] == 'patrol':
 
-		# if baddie['x'] > canvasDim['w']/2:
-		ddx = baddie['dir']*4
-		ddy = randint(-1,1)
-		# else:
-		# 	ddx = randint(-1,1)
-		# 	ddy = baddie['dir']*4
+			#patrol
+			ddx = baddie['dir']*4
+			ddy = randint(-1,1)
 
-		# ddx = randint(-dx,dx)
-		# ddy = randint(-dy,dy)
+		else:
 
+			dx = randint(0,5)
+			dy = randint(0,5)
 
-		# print(baddie['dx'])
-		# if ddx == 0: 
-		# 	ddx += 1
-		# if ddy == 0:
-		# 	ddy += 1
+			ddx = randint(-dx,dx)
+			ddy = randint(-dy,dy)
+
+			# if ddx == 0: 
+			# 	ddx += 1
+			# if ddy == 0:
+			# 	ddy += 1
 
 		# if baddie['x'] != collisionWithCanvasBounds(baddie)['x']
 
@@ -422,16 +421,7 @@ def getChaseDirection(baddie):
 
 		# baddie = collisionWithRect(baddie)
 
-		# dx = randint(0,5)
-		# dy = randint(0,5)
 
-		# ddx = randint(-dx,dx)
-		# ddy = randint(-dy,dy)
-
-		# if ddx == 0: 
-		# 	ddx += 1
-		# if ddy == 0:
-		# 	ddy += 1
 
 	return ddx, ddy
 
@@ -444,12 +434,14 @@ def refreshGlobals():
 	global prizeList
 	global baddieList
 	global uidCount
+	global bonesList
 
 	ipDict = {}
 	rectList = []
 	prizeList = []
 	baddieList = []
 	uidCount = 0
+	bonesList = []
 
 
 def sqOnSqCollision(rect1, rect2):
@@ -547,9 +539,12 @@ def collisionWithPrize(specificObjectDict):
 
 def collisionWithBaddie(specificObjectDict, baddie, i, ip):
 
+	global bonesList
+
 	# create collison for baddies
 	if sqOnSqCollision(specificObjectDict, baddie) and specificObjectDict['state'] == 'rest':
 		baddieList.pop(i)
+		bonesList.append({'x':baddie['x'],'y':baddie['y']})
 		# specificObjectDict = getHurt(specificObjectDict, ip)
 		getHurt(specificObjectDict, ip)
 
@@ -566,13 +561,11 @@ def getHurt(specificObjectDict, ip):
 	specificObjectDict['health']['hearts'] = specificObjectDict['health']['hearts'].replace(u'♥',u'♡',1)
 	specificObjectDict['health']['level'] -= 1
 
-	print(specificObjectDict['health']['level'])
 
 	if specificObjectDict['health']['level'] <= 0: 
 	# if specificObjectDict['w'] <= 0:
 			ipDict.pop(ip, None)
-			print(ip)
-			print(ipDict)
+
 			if not ipDict:
 
 				refreshGlobals()
