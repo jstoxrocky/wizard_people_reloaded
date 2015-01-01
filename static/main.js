@@ -1,6 +1,13 @@
 $(document).ready(function(){
 
-$("body").append("<h1 class='centered'>CLICK TO SELECT A WIZARD, ENTER TO PLAY</h1>")
+$("body").append("<div class='startText' id='title'>WIZARD PEOPLE</div>")
+$("body").append("<div class='startText' id='instructions'>CLICK TO SELECT A WIZARD</div>")
+$("body").append("<div class='startText' id='instructions2'>WAIT FOR OTHER PLAYERS</div>")
+$("body").append("<div class='startText' id='instructions3'>PRESS ENTER TO BEGIN</div>")
+// $("body").append("<h1 id='instruction' class='centered'>CLICK TO SELECT A WIZARD, ENTER TO PLAY</h1>")
+
+
+
 
 var ipDict;
 var canvas;
@@ -121,7 +128,7 @@ function updatestartScreen(){
 
 $("body").click(function(event){  
 
-	$( "h1" ).fadeOut( "slow", function() {
+	$( ".startText" ).fadeOut( "slow", function() {
     // Animation complete.
   	});
 

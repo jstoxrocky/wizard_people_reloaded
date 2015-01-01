@@ -26,19 +26,45 @@ h1 {
 
 div {
     font-family: 'Montserrat',verdana,arial,sans-serif;
-    color: #35373b;
-    /*border-radius: 6px; */
+    /*background-color: #35373b;*/
+     position: fixed;
+     width:100%;
+     /*height:30%;*/
+     /*top: 0%;*/
+     color:#ffffff;
+     padding-top:1%;
+     padding-bottom:1%;
+     text-align: center;
+     
+
+     /*left:10em;*/
 }
 
-.centered {
+
+/*.centered {
   position: fixed;
-  top: 30%;
   left: 15%;
+}*/
 
+#title {
+    top: 0%;
+    font-size: 5em;
 }
 
+#instructions{
+    top: 15%;
+    font-size: 2em;
+}
 
+#instructions2{
+    top: 25%;
+    font-size: 2em;
+}
 
+#instructions3{
+    top: 35%;
+    font-size: 2em;
+}
 
 
 

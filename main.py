@@ -144,11 +144,10 @@ def popPlayerFunc(d):
 		
 		if not ipDict:
 			refreshGlobals()
-
-		globalHeadip = min(ipDict.keys())
+		else:
+			globalHeadip = min(ipDict.keys())
 
 		msg = "Player popped"
-
 		emit('popPlayerPush', {"msg":msg}, broadcast=True,) 
 
 	# except:
@@ -677,13 +676,13 @@ def getHurt(specificObjectDict, ip):
 
 
 			if not ipDict:
-
 				refreshGlobals()
-
 				msg = "Global variables refreshed."
 				emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
-
-			globalHeadip = min(ipDict.keys())
+			else:
+				globalHeadip = min(ipDict.keys())
+				
+			# globalHeadip = min(ipDict.keys())
 
 	return specificObjectDict
 
