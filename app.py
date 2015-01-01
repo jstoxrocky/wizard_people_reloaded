@@ -14,7 +14,7 @@ import threading
 
 #start me up!
 app = Flask(__name__)
-app.debug = True
+app.debug = False
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
@@ -186,7 +186,7 @@ def createCanvasFunc(d):
 	#select level and colors
 	#push most of this to browser
 	# googleColorList = ['#0266C8', '#F90101', '#F2B50F', '#00933B']
-	levelList = ['cave', 'grassy', 'icy']
+	levelList = ['cave', 'grassy', 'icy', 'sand']
 	levelNum = randint(0,len(levelList)-1)
 
 	if levelList[levelNum] == 'grassy':
@@ -198,6 +198,9 @@ def createCanvasFunc(d):
 	elif levelList[levelNum] == 'icy':
 		colorList = ['#BFEFFF','#35373b', '#82CFFD', '#212121', "#4f4f4f"]
 		bgcolor = '#FFFAFA'
+	elif levelList[levelNum] == 'sand':
+		colorList = ['#956c4b','#905120', '#502d12', '#d4803f', "#b08563"]
+		bgcolor = '#edd9af'
 
 
 	#create rectangles
@@ -251,8 +254,8 @@ def createCanvasFunc(d):
 			baddieSpecs = ratSpecs
 
 		temp = {
-			"x":randint(100,canvasDim['w']-100),
-			"y":randint(100,canvasDim['h']-100),
+			"x":randint(200,canvasDim['w']-100),
+			"y":randint(200,canvasDim['h']-100),
 			"w":baddieSpecs["w"],
 			"h":baddieSpecs["h"],
 			"dir":baddieDirList[randint(0,1)],
@@ -504,6 +507,7 @@ def refreshGlobals():
 	uidCount = 0
 	bonesList = []
 	colsChosen = {}
+	canvasDim = {}
 
 
 def sqOnSqCollision(rect1, rect2):

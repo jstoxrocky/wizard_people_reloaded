@@ -255,7 +255,7 @@ socket.on('popPlayerPush', function(d) {
 var bgcolor;
 socket.on('createCanvasPush', function(d) {
     // $("body").css({"backgroundColor":d['bgcolor']});
-    $("body").css({"backgroundColor":"#000000"});
+    $("body").css({"backgroundColor":"#35373b"});
 
     bgcolor = d['bgcolor'];
 
