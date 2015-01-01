@@ -51,21 +51,21 @@ var rat_right = new Image();
 
 //album: http://i.imgur.com/wkONQZ8.png
 
-coin.src = "http://i.imgur.com/wOxaRHq.png";
-ruby.src = "http://i.imgur.com/bAsFNAZ.png"
-goblin_left.src = "http://i.imgur.com/gB7lEU5.png";
-goblin_right.src = "http://i.imgur.com/WYwdG3Z.png";
-wizard_red_left.src = "http://i.imgur.com/ZDSfndn.png";
-wizard_red_right.src = "http://i.imgur.com/wkONQZ8.png";
-wizard_blu_left.src = "http://i.imgur.com/k2ob4Wl.png";
-wizard_blu_right.src = "http://i.imgur.com/HLY8Ipk.png";
-wizard_gre_left.src = "http://i.imgur.com/HsyJz43.png";
-wizard_gre_right.src = "http://i.imgur.com/QvhDDL5.png";
-wizard_yel_left.src = "http://i.imgur.com/b3oV1mG.png";
-wizard_yel_right.src = "http://i.imgur.com/ICC5ViR.png";
-bones.src = "http://i.imgur.com/cXrOQAK.png";
-rat_left.src = "http://i.imgur.com/GqhYJ7I.png";
-rat_right.src = "http://i.imgur.com/rg33icE.png";
+coin.src = "https://i.imgur.com/wOxaRHq.png";
+ruby.src = "https://i.imgur.com/bAsFNAZ.png"
+goblin_left.src = "https://i.imgur.com/gB7lEU5.png";
+goblin_right.src = "https://i.imgur.com/WYwdG3Z.png";
+wizard_red_left.src = "https://i.imgur.com/ZDSfndn.png";
+wizard_red_right.src = "https://i.imgur.com/wkONQZ8.png";
+wizard_blu_left.src = "https://i.imgur.com/k2ob4Wl.png";
+wizard_blu_right.src = "https://i.imgur.com/HLY8Ipk.png";
+wizard_gre_left.src = "https://i.imgur.com/HsyJz43.png";
+wizard_gre_right.src = "https://i.imgur.com/QvhDDL5.png";
+wizard_yel_left.src = "https://i.imgur.com/b3oV1mG.png";
+wizard_yel_right.src = "https://i.imgur.com/ICC5ViR.png";
+bones.src = "https://i.imgur.com/cXrOQAK.png";
+rat_left.src = "https://i.imgur.com/GqhYJ7I.png";
+rat_right.src = "https://i.imgur.com/rg33icE.png";
 
 var wizColorDict = {"red":[wizard_red_left,wizard_red_right],
 					"blu":[wizard_blu_left,wizard_blu_right],
