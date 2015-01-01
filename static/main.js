@@ -7,8 +7,6 @@ $("body").append("<div class='startText' id='instructions3'>PRESS ENTER TO BEGIN
 // $("body").append("<h1 id='instruction' class='centered'>CLICK TO SELECT A WIZARD, ENTER TO PLAY</h1>")
 
 
-
-
 var ipDict;
 var canvas;
 var ctx;
@@ -54,7 +52,7 @@ rat_right.src = "static/images/rat_right.png";
 var wizColorDict = {"red":[wizard_red_left,wizard_red_right],
 					"blu":[wizard_blu_left,wizard_blu_right],
 					"gre":[wizard_gre_left,wizard_gre_right],
-					"yel":[wizard_yel_right,wizard_yel_right],
+					"yel":[wizard_yel_left,wizard_yel_right],
 					}
 
 var prizeTypeDict = {"coin":coin,
@@ -254,10 +252,25 @@ socket.on('popPlayerPush', function(d) {
 //socket.emit('createCanvasRequest', {"w":document.body.clientWidth, "h":document.body.clientHeight});
 
 //create canvas Push
+var bgcolor;
 socket.on('createCanvasPush', function(d) {
-    $("body").css({"backgroundColor":d['bgcolor']});
+    // $("body").css({"backgroundColor":d['bgcolor']});
+    $("body").css({"backgroundColor":"#000000"});
+
+    bgcolor = d['bgcolor'];
+
+    // ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // console.log(d.canvasDim['w']);
+    // console.log(d.canvasDim['h']);
+    canvas.width = d.canvasDim['w'];
+	canvas.height = d.canvasDim['h'];
+	// ctx = canvas.getContext("2d");
+
+
     createCanvas(d.rectList, d.prizeList, d.baddieList);
     // gameLoop();
+
+
 });
 
 //game loop Push
@@ -291,6 +304,7 @@ function createCanvas(rL,pL,bL) {
 	baddieList = bL;
 	gameLoop();
 	// socket.emit('incrementBagGuysPositionRequest', {});
+
 }
 
 
@@ -300,6 +314,9 @@ function draw() {
 
 
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	ctx.fillStyle = bgcolor;
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 	//rectangles
 	for (i = 0; i < rectList.length; i++) { 

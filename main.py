@@ -14,7 +14,7 @@ import threading
 
 #start me up!
 app = Flask(__name__)
-app.debug = False
+app.debug = True
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
@@ -174,8 +174,14 @@ def createCanvasFunc(d):
 	bonesList = []
 
 	ip = session['uid']
-	canvasDim['w'] = d['w']
-	canvasDim['h'] = d['h']
+
+	canvasDim['w'] = canvasDim.get('w', 1000000)
+	canvasDim['h'] = canvasDim.get('h', 1000000)
+
+	if d['w'] < canvasDim['w']:
+		canvasDim['w'] = d['w']
+	if d['h'] < canvasDim['h']:
+		canvasDim['h'] = d['h']
 
 	#select level and colors
 	#push most of this to browser
@@ -195,19 +201,19 @@ def createCanvasFunc(d):
 
 
 	#create rectangles
-	rectNum = d['w']*d['h']/91022
+	rectNum = canvasDim['w']*canvasDim['h']/91022
 	for i in range(0,rectNum):
 		rectList.append(
-			{"x":randint(100,d['w']-100),
-			"y":randint(000,d['h']-100),
-			"w":randint(50,d['w']/2),
-			"h":randint(50,d['h']/2),
+			{"x":randint(100,canvasDim['w']-100),
+			"y":randint(000,canvasDim['h']-100),
+			"w":randint(50,canvasDim['w']/2),
+			"h":randint(50,canvasDim['h']/2),
 			"c":colorList[randint(0,len(colorList)-1)],
 			}
 		)
 
 	#create prizes
-	prizeNum = d['w']*d['h']/32768
+	prizeNum = canvasDim['w']*canvasDim['h']/32768
 	success = 0
 	while len(prizeList) < prizeNum:
 
@@ -215,8 +221,8 @@ def createCanvasFunc(d):
 		if success % 7 == 0:
 			prizeType = 'ruby'
 
-		temp = {"x":randint(100,d['w']-100),
-			"y":randint(100,d['h']-100),
+		temp = {"x":randint(100,canvasDim['w']-100),
+			"y":randint(100,canvasDim['h']-100),
 			"w":25,
 			"h":25,
 			"prizeType":prizeType,
@@ -231,7 +237,7 @@ def createCanvasFunc(d):
 			success += 1
 			prizeList.append(temp)
 				
-	baddieNum = d['w']*d['h']/100960
+	baddieNum = canvasDim['w']*canvasDim['h']/100960
 	baddieDirList = [1,-1]
 	
 	goblinSpecs = {"type":"goblin", "speed":4, "action":"patrol", "w":35, "h":35}
@@ -245,8 +251,8 @@ def createCanvasFunc(d):
 			baddieSpecs = ratSpecs
 
 		temp = {
-			"x":randint(100,d['w']-100),
-			"y":randint(100,d['h']-100),
+			"x":randint(100,canvasDim['w']-100),
+			"y":randint(100,canvasDim['h']-100),
 			"w":baddieSpecs["w"],
 			"h":baddieSpecs["h"],
 			"dir":baddieDirList[randint(0,1)],
@@ -263,7 +269,7 @@ def createCanvasFunc(d):
 		if c==0:
 			baddieList.append(temp)
 
-	emit('createCanvasPush', {"rectList":rectList, "prizeList":prizeList, "baddieList":baddieList, 'bgcolor':bgcolor}, broadcast=True,) 
+	emit('createCanvasPush', {"rectList":rectList, "prizeList":prizeList, "baddieList":baddieList, 'bgcolor':bgcolor, 'canvasDim':canvasDim}, broadcast=True,) 
 
 
 
@@ -666,5 +672,5 @@ def collision(circle, rect):
 
 
 if __name__ == '__main__':
-	# socketio.run(app, host= '0.0.0.0', port=6020)
-	socketio.run(app, host= '127.0.0.1', port=6020)
+	socketio.run(app, host= '0.0.0.0', port=6020)
+	# socketio.run(app, host= '127.0.0.1', port=6020)
