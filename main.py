@@ -14,7 +14,7 @@ import threading
 
 #start me up!
 app = Flask(__name__)
-app.debug = True
+app.debug = False
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
@@ -84,6 +84,7 @@ def playerChooseFunc(d):
 		"w": 29,
 		"h": 29,
 		"c": d['col'],
+		"cc": "#CD96CD",
 		"r": 0,
 		"id": ip,
 		"state": 'rest',
@@ -99,9 +100,9 @@ def playerChooseFunc(d):
 		# c = colsDict.get(val, 0)
 		colsDict[val] += 1
 
-	print(colsDict)
+	# print(colsDict)
 
-	print(ipDict.keys())
+	# print(ipDict.keys())
 	globalHeadip = min(ipDict.keys())
 	# print(globalHeadip)
 
@@ -185,15 +186,12 @@ def createCanvasFunc(d):
 	if levelList[levelNum] == 'grassy':
 		colorList = ['#999999','#35373b', '#8C8C8C', '#212121', "#4f4f4f"]
 		bgcolor = '#86C67C'
-		baddieColor = '#87421F'
 	elif levelList[levelNum] == 'cave':
 		colorList = ['#42526C','#35373b', '#2F4F4F', '#212121', "#4f4f4f"]
 		bgcolor = '#8C8C8C'
-		baddieColor = '#86C67C'
 	elif levelList[levelNum] == 'icy':
 		colorList = ['#BFEFFF','#35373b', '#82CFFD', '#212121', "#4f4f4f"]
 		bgcolor = '#FFFAFA'
-		baddieColor = '#e5e1e1'
 
 
 	#create rectangles
@@ -235,15 +233,26 @@ def createCanvasFunc(d):
 				
 	baddieNum = d['w']*d['h']/100960
 	baddieDirList = [1,-1]
+	
+	goblinSpecs = {"type":"goblin", "speed":4, "action":"patrol", "w":35, "h":35}
+	ratSpecs = {"type":"rat", "speed":8, "action":"random","w":104*0.4,"h":50*0.4}
+
 	while len(baddieList) < baddieNum:
 
-		temp = {"x":randint(100,d['w']-100),
+		if len(baddieList) > baddieNum*1/4.0:
+			baddieSpecs = goblinSpecs
+		else:
+			baddieSpecs = ratSpecs
+
+		temp = {
+			"x":randint(100,d['w']-100),
 			"y":randint(100,d['h']-100),
-			"w":35,
-			"h":35,
-			"c":baddieColor,
+			"w":baddieSpecs["w"],
+			"h":baddieSpecs["h"],
 			"dir":baddieDirList[randint(0,1)],
-			"action": 'patrol',
+			"action": baddieSpecs["action"],
+			"speed": baddieSpecs["speed"],
+			"type": baddieSpecs["type"]
 			}
 
 		c = 0
@@ -261,39 +270,21 @@ def createCanvasFunc(d):
 @socketio.on('keypressRequest', namespace='/test')
 def keypressFunc(d):
 
-	# try:
-	# if 
-
 	global ipDict
 	global baddieList
-	# global prizeList
 
 	try:
 		ip = session['uid']
 	except:
 		ip = -1
 
-
-	# print(ip)
-	# print(ipDict)
-
 	if ip in ipDict and ipDict:
-
-		# print('a')
-
-		# #restart level if all coins obtained
-		# if not prizeList:
-		# 	refreshGlobals()
-		# 	msg = "Global variables refreshed."
-		# 	emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
 
 		#incrememnt move
 		ipDict[ip]['x'] += d['dx']
 		ipDict[ip]['y'] += d['dy']
 		ipDict[ip]['dx'] = d['dx']
 		ipDict[ip]['dy'] = d['dy']
-
-
 
 		#control for collisions with canvas boundaries
 		ipDict[ip] = collisionWithCanvasBounds(ipDict[ip])
@@ -304,18 +295,7 @@ def keypressFunc(d):
 		#control for collisions with prizes
 		ipDict[ip] = collisionWithPrize(ipDict[ip])
 
-		#control for collisions with baddies
-		# for i, baddie in enumerate(baddieList):
-			# collisionWithBaddie(ipDict[ip], baddie, i, ip)
-
 		emit('keypressPush', {"ipDict":ipDict, "prizeList":prizeList, "baddieList":baddieList, "bonesList":bonesList}, broadcast=True,) 
-
-	# except KeyError:
-	# 	pass
-
-
-	
-
 
 
 
@@ -323,7 +303,6 @@ def keypressFunc(d):
 def attackFunc(d):
 
 	global ipDict
-	# global prizeList
 	global baddieList
 	global bonesList
 
@@ -364,13 +343,10 @@ def attackFunc(d):
 @socketio.on('incrementBagGuysPositionRequest', namespace='/test')
 def incrementBagGuysPositionFunc(d):
 
-	# while True:	
-
 		global baddieList
 		global ipDict
 		global bonesList
 		global prizeList
-
 
 		if not ipDict:
 			refreshGlobals()
@@ -386,37 +362,35 @@ def incrementBagGuysPositionFunc(d):
 			msg = "Global variables refreshed."
 			emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
 
-		# print(ip)
-		# print(ipDict.keys())
-
 		if ip in ipDict and ipDict:
-			# globalHeadip = min(ipDict.keys())
 
-			# print('a')
-
-				# print(ipDict)
 			if ipDict[ip]['r'] > 0 and ipDict[ip]['state'] == 'attack':
-
+				ipDict[ip]['cc'] = '#CD96CD'
 				ipDict[ip]['r'] -=  10
 
 			else:
 
 				ipDict[ip]['r'] = 0
-
+				ipDict[ip]['cc'] = '#CD96CD'
 				ipDict[ip]['state'] = 'rest'
 
 			for i, baddie in enumerate(baddieList):
 
-				#check for collisions
-				# ipDict[ip] = collisionWithBaddie(ipDict[ip], baddie, i, ip)
-				collisionWithBaddie(ipDict[ip], baddie, i, ip)
+				#if loop continues checking for baddies after a baddie in the loop
+				#got rid of the last player
+				if not ipDict:
+					break
 
-				# print(ip)
-				# print(ipDict.keys())
-				# print(globalHeadip)
-				# print(ip)
+				#check for collisions
+				collisionWithBaddie(ipDict[ip], baddie, i, ip)
+				# try:
+				# 	collisionWithBaddie(ipDict[ip], baddie, i, ip)
+				# except:
+				# 	print(ip)
+				# 	print(ipDict.keys())
+				# 	assert(False)
+
 				if ipDict and ip == globalHeadip:
-				# if True:
 
 					#get chase direction if players nearby
 					ddx, ddy = getChaseDirection(baddie)
@@ -430,8 +404,6 @@ def incrementBagGuysPositionFunc(d):
 
 					if (baddie['x'] < 0 or baddie['x']+baddie['w'] > canvasDim['w']):
 						baddie['dir'] = baddie['dir']*-1
-					# if (baddie['y'] < 0 or baddie['y']+baddie['h'] > canvasDim['h']):
-					# 	baddie['dir'] = baddie['dir']*-1
 
 					for rect in rectList:
 						if sqOnSqCollision(baddie, rect):
@@ -444,12 +416,7 @@ def incrementBagGuysPositionFunc(d):
 			
 					baddie = collisionWithRect(baddie)
 				
-			# if ipDict and ip == globalHeadip:
-			if True:
-				emit('incrementBagGuysPositionPush', {"ipDict": ipDict, "baddieList":baddieList, "bonesList": bonesList}, broadcast=True,) 
-				# incrementBagGuysPositionFunc(1)
-				# except KeyError:
-				# 	pass
+			emit('incrementBagGuysPositionPush', {"ipDict": ipDict, "baddieList":baddieList, "bonesList": bonesList}, broadcast=True,) 
 
 
 		
@@ -485,47 +452,30 @@ def getChaseDirection(baddie):
 		xdif = baddie['x'] - ipDict[target_ip]['x']
 		ydif = baddie['y'] - ipDict[target_ip]['y']
 		if xdif > 0:
-			ddx = -(4 + randint(0,2))
+			ddx = -(baddie['speed'] + randint(0,2))
 		else:
-			ddx = (4 + randint(0,2))
+			ddx = (baddie['speed'] + randint(0,2))
 
 		if ydif > 0:
-			ddy = -(4 + randint(0,2))
+			ddy = -(baddie['speed'] + randint(0,2))
 		else:
-			ddy = (4 + randint(0,2))
+			ddy = (baddie['speed'] + randint(0,2))
 	
 	else:
 
 		if baddie['action'] == 'patrol':
 
 			#patrol
-			ddx = baddie['dir']*4
+			ddx = baddie['dir']*baddie['speed']
 			ddy = randint(-1,1)
 
-		else:
+		if baddie['action'] == 'random':
 
-			dx = randint(0,5)
-			dy = randint(0,5)
+			dx = randint(0,baddie['speed'])
+			dy = randint(0,baddie['speed'])
 
 			ddx = randint(-dx,dx)
 			ddy = randint(-dy,dy)
-
-			# if ddx == 0: 
-			# 	ddx += 1
-			# if ddy == 0:
-			# 	ddy += 1
-
-		# if baddie['x'] != collisionWithCanvasBounds(baddie)['x']
-
-
-		# if baddie['x'] != collisionWithRect(baddie)['x'] or \
-		# 	baddie['y'] != collisionWithRect(baddie)['y']:
-		# 	print('c')
-		# 	baddie['dir'] = baddie['dir']*-1
-
-		# baddie = collisionWithRect(baddie)
-
-
 
 	return ddx, ddy
 
@@ -667,7 +617,8 @@ def getHurt(specificObjectDict, ip):
 
 	specificObjectDict['health']['hearts'] = specificObjectDict['health']['hearts'].replace(u'♥',u'♡',1)
 	specificObjectDict['health']['level'] -= 1
-
+	specificObjectDict['r'] = 25
+	specificObjectDict['cc'] = "#CC1100"
 
 	if specificObjectDict['health']['level'] <= 0: 
 	# if specificObjectDict['w'] <= 0:

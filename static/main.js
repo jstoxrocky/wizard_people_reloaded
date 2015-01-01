@@ -18,10 +18,6 @@ var baddieList;
 var bonesList; 
 var colsDict;
 
-// var redSize = 1;
-// var bluSize = 1;
-// var greSize = 1;
-// var yelSize = 1;
 
 var coin = new Image();
 var ruby = new Image();
@@ -36,6 +32,8 @@ var wizard_gre_right = new Image();
 var wizard_yel_left = new Image();
 var wizard_yel_right = new Image();
 var bones = new Image();
+var rat_left = new Image();
+var rat_right = new Image();
 
 coin.src = "static/images/coin.png";
 ruby.src = "static/images/ruby.png";
@@ -50,6 +48,8 @@ wizard_gre_right.src = "static/images/wiz_gre_right.png";
 wizard_yel_left.src = "static/images/wiz_yel_left.png";
 wizard_yel_right.src = "static/images/wiz_yel_right.png";
 bones.src = "static/images/bones.png";
+rat_left.src = "static/images/rat_left.png";
+rat_right.src = "static/images/rat_right.png";
 
 var wizColorDict = {"red":[wizard_red_left,wizard_red_right],
 					"blu":[wizard_blu_left,wizard_blu_right],
@@ -226,12 +226,13 @@ updatestartScreen();
 //refresh global variables Push
 socket.on('refreshGlobalsPush', function(d) {
 
-	// while (keyState[87] || keyState[65] || keyState[83] || keyState[68]){
-		
-	// }
+	// alert("PLAY AGAIN?");
+
 
     console.log(d.msg);
     location.reload();
+
+
 });
 
 
@@ -294,12 +295,9 @@ function createCanvas(rL,pL,bL) {
 
 
 
-
-
-
-
-
 function draw() {
+
+
 
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -327,12 +325,21 @@ function draw() {
 	//baddies
 	for (i = 0; i < baddieList.length; i++) { 
 		
+			if (baddieList[i]['type'] == 'goblin'){
+				img_right = goblin_right;
+				img_left = goblin_left;
+			}
+			else if (baddieList[i]['type'] == 'rat'){
+				img_right = rat_right;
+				img_left = rat_left;
+			}
+
 
 			if (baddieList[i]['dx']>=0){
-				image = goblin_right;
+				image = img_right;
 			}
 			else{
-				image = goblin_left;
+				image = img_left;
 			}
 
 		ctx.drawImage(image, baddieList[i].x, baddieList[i].y, baddieList[i].w, baddieList[i].h);
@@ -352,7 +359,7 @@ function draw() {
 
 		textColor = googleColorDict[p['c']]
 
-			ctx.fillStyle = '#CD96CD';
+			ctx.fillStyle = p['cc'];
 			ctx.beginPath();
 			ctx.arc(
 				cx,
