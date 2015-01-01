@@ -18,7 +18,9 @@ body {
 
 h1 {
     color:#ffffff;
+    font-family: 'Montserrat',verdana,arial,sans-serif;
 }
+
 
 
 
@@ -28,29 +30,13 @@ div {
     /*border-radius: 6px; */
 }
 
-#header {
-    text-align:center;
-    color:#ffffff;
-    width:100%;
-    display: inline-block;    
-    font-size:1.2em;
-    background-color:#35373b;
+.centered {
+  position: fixed;
+  top: 30%;
+  left: 15%;
+
 }
 
-#jpanel {
-    text-align:left;
-    color:#ffffff;
-    width:100%;
-    /*display: inline-block;    */
-    font-size:1.2em;
-    /*background-color:red;*/
-    padding-left: 3%;
-    display: inline-block;
-}
-
-#jpanel2{
-  display: inline-block;
-}
 
 
 

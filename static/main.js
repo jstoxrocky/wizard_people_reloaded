@@ -1,5 +1,7 @@
 $(document).ready(function(){
 
+$("body").append("<h1 class='centered'>CLICK TO SELECT A WIZARD, ENTER TO PLAY</h1>")
+
 var ipDict;
 var canvas;
 var ctx;
@@ -7,6 +9,12 @@ var rectList;
 var prizeList; 
 var baddieList; 
 var bonesList; 
+var colsDict;
+
+// var redSize = 1;
+// var bluSize = 1;
+// var greSize = 1;
+// var yelSize = 1;
 
 var coin = new Image();
 var ruby = new Image();
@@ -48,39 +56,77 @@ var prizeTypeDict = {"coin":coin,
 
 var googleColorDict = {'blu':'#0266C8', 'red':'#F90101', 'yel':'#F2B50F', 'gre':'#00933B'}
 
+canvas = document.getElementById("canvas");
+canvas.width = document.body.clientWidth;
+canvas.height = document.body.clientHeight;
+ctx = canvas.getContext("2d");
+
+var redTextToPrint = 0;
+var bluTextToPrint = 0;
+var greTextToPrint = 0;
+var yelTextToPrint = 0;
+
 
 function drawstartScreen(){
 
-	canvas = document.getElementById("canvas");
-	canvas.width = document.body.clientWidth;
-	canvas.height = document.body.clientHeight;
-	ctx = canvas.getContext("2d");
 	// ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+	// console.log(redSize);
 	wizard_yel_right.onload = function() {
   		ctx.drawImage(wizard_red_right, 0, 0, canvas.width/2, canvas.height/2);
   		ctx.drawImage(wizard_blu_right, canvas.width-canvas.width/2, 0, canvas.width/2, canvas.height/2);
   		ctx.drawImage(wizard_yel_right, 0, canvas.height-canvas.height/2, canvas.width/2, canvas.height/2);
   		ctx.drawImage(wizard_gre_right, canvas.width-canvas.width/2, canvas.height-canvas.height/2, canvas.width/2, canvas.height/2);
 
-  // 		textToPrint = "click on wizard to start game"
-		// ctx.fillStyle = "#ffffff";
-	 //  	ctx.font = "bold 50px Arial";
-	 //  	ctx.fillText(textToPrint, 0, canvas.height/2);
   	}
 
-
-
-	
-	
-
-  	
 
 }
 
 
+function updatestartScreen(){
 
-$("body").click(function(event){    
+  	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	
+	ctx.drawImage(wizard_red_right, 0, 0, canvas.width/2, canvas.height/2);
+	ctx.drawImage(wizard_blu_right, canvas.width-canvas.width/2, 0, canvas.width/2, canvas.height/2);
+	ctx.drawImage(wizard_yel_right, 0, canvas.height-canvas.height/2, canvas.width/2, canvas.height/2);
+	ctx.drawImage(wizard_gre_right, canvas.width-canvas.width/2, canvas.height-canvas.height/2, canvas.width/2, canvas.height/2);
+
+
+	ctx.fillStyle = "#ffffff";
+  	ctx.font = "bold 50px Arial";
+  	ctx.fillText(redTextToPrint, 0, canvas.height/2);
+
+  	ctx.fillStyle = "#ffffff";
+  	ctx.font = "bold 50px Arial";
+  	ctx.fillText(bluTextToPrint, canvas.width/2, canvas.height/2);
+
+  	ctx.fillStyle = "#ffffff";
+  	ctx.font = "bold 50px Arial";
+  	ctx.fillText(greTextToPrint, canvas.width/2, canvas.height);
+
+  	ctx.fillStyle = "#ffffff";
+  	ctx.font = "bold 50px Arial";
+  	ctx.fillText(yelTextToPrint, 0, canvas.height);
+
+}	
+	
+
+
+	
+
+
+
+
+$("body").click(function(event){  
+
+	$( "h1" ).fadeOut( "slow", function() {
+    // Animation complete.
+  	});
+
+
+
 	x = event.pageX;
 	y = event.pageY;
 
@@ -101,12 +147,10 @@ $("body").click(function(event){
 		}
 	}
 
-	// console.log("player X chose wizard " + col);
 	if (ipDict == undefined){
 		socket.emit('playerChooseRequest', {"col":col});
 	}
-	//socket.emit('createCanvasRequest', {"w":document.body.clientWidth, "h":document.body.clientHeight, "col":col});
-
+	
 });
 
 
@@ -126,10 +170,16 @@ var socket = io.connect('http://' + document.domain + ':' + location.port + '/te
 
 
 socket.on('playerChoosePush', function(d) {
-    console.log(d.msg);
-    alert(d.msg);
-    // drawstartScreen();
-    // socket.emit('createCanvasRequest', {"w":document.body.clientWidth, "h":document.body.clientHeight});
+
+    colsDict = d.colsDict
+    // console.log(colsDict)
+
+    redTextToPrint = colsDict['red'];
+	bluTextToPrint = colsDict['blu'];
+	greTextToPrint = colsDict['gre'];
+	yelTextToPrint = colsDict['yel'];
+
+    updatestartScreen();
 
 });
 
@@ -137,10 +187,7 @@ socket.on('playerChoosePush', function(d) {
 
 
 window.onbeforeunload = function() {
-    // return "Are you sure you wish to leave the page?";
-    // console.log("hi");
     socket.emit('popPlayerRequest', {});
-
 }
 
 
@@ -151,15 +198,31 @@ window.onbeforeunload = function() {
 //connection Push
 socket.on('connectPush', function(d) {
     console.log(d.msg);
-    // drawstartScreen();
+    
+
+    colsDict = d.colsDict
+    // console.log(colsDict)
+
+    redTextToPrint = colsDict['red'];
+	bluTextToPrint = colsDict['blu'];
+	greTextToPrint = colsDict['gre'];
+	yelTextToPrint = colsDict['yel'];
+
+    updatestartScreen();
     return false;
 });
 
 drawstartScreen();
+updatestartScreen();
 
 
 //refresh global variables Push
 socket.on('refreshGlobalsPush', function(d) {
+
+	// while (keyState[87] || keyState[65] || keyState[83] || keyState[68]){
+		
+	// }
+
     console.log(d.msg);
     location.reload();
 });
@@ -219,7 +282,7 @@ function createCanvas(rL,pL,bL) {
 	prizeList = pL;
 	baddieList = bL;
 	gameLoop();
-
+	// socket.emit('incrementBagGuysPositionRequest', {});
 }
 
 
@@ -357,7 +420,7 @@ function gameLoop() {
 		    }
     	}
 			
-		else {
+		else if (keyState[87] || keyState[65] || keyState[83] || keyState[68]) {
 
 				x = 0;
 				y = 0;
@@ -412,7 +475,6 @@ function gameLoop() {
 }
 
 
-// gameLoop();
 
 
 
