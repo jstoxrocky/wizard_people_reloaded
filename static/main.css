@@ -9,7 +9,9 @@ body {
     width: 100%; 
     height: 100%; 
     background-size: 100%;
-    background-color:#86C67C;
+    /*background-color:#86C67C;*/
+    background-color:#35373b;
+    
     position: relative; 
     padding: 0; 
     margin: 0;

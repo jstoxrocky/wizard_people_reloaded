@@ -17,7 +17,7 @@ from functools import update_wrapper
 
 #start me up!
 app = Flask(__name__)
-app.debug = False
+app.debug = True
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
@@ -121,6 +121,7 @@ def playerChooseFunc(d):
 def refreshGlobalsFunc(d):
 
 	refreshGlobals()
+
 	msg = "Global variables refreshed."
 	emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
 

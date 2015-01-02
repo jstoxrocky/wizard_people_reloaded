@@ -142,7 +142,9 @@ function updatestartScreen(){
 
 
 
-$("body").click(function(event){  
+function clicker(){
+
+	$("body").click(function(event){  
 
 	$( ".startText" ).fadeOut( "slow", function() {
     // Animation complete.
@@ -176,25 +178,15 @@ $("body").click(function(event){
 	
 });
 
+}
 
-
+clicker();
 
 $(document).keypress(function(e) {
     if(e.which == 13) {
 		socket.emit('createCanvasRequest', {"w":document.body.clientWidth, "h":document.body.clientHeight});
     }
 });
-
-
-
-// var host = location.origin;
-// var host = 'https://' + document.domain;
-// var socket = io.connect(host, {port: location.port, transports: ["websocket"]});
-
-
-// console.log(host);
-// console.log('https://' + document.domain);
-// console.log(socket);
 
 
 //connection Request
@@ -253,9 +245,15 @@ updatestartScreen();
 socket.on('refreshGlobalsPush', function(d) {
 
 	// alert("PLAY AGAIN?");
-
+	// redTextToPrint = 0;
+	// bluTextToPrint = 0;
+	// greTextToPrint = 0;
+	// yelTextToPrint = 0;
 
     console.log(d.msg);
+    clearTimeout(timer);
+    // updatestartScreen();
+    // clicker();
     location.reload();
 
 
@@ -450,6 +448,7 @@ function draw() {
 var keyState = {};
 var mult;
 var gameCount=1;
+var timer;
 
 window.addEventListener('keydown',function(e){
     keyState[e.keyCode || e.which] = true;
@@ -522,7 +521,7 @@ function gameLoop() {
 
 		}
 
-		setTimeout(gameLoop, 20);
+		timer  = setTimeout(gameLoop, 20);
 
 		gameCount = gameCount + 1;
 
