@@ -35,7 +35,7 @@ globalHeadip = -1
 def index():
 	return render_template('main.html')
 
-
+@crossdomain(origin='*')
 @socketio.on('connect', namespace='/test')
 def connectFunc():
 
@@ -68,7 +68,7 @@ def connectFunc():
 		emit('connectPush', {"msg":msg, 'colsDict':colsDict}, broadcast=True,) 
 
 
-
+@crossdomain(origin='*')
 @socketio.on('playerChooseRequest', namespace='/test')
 def playerChooseFunc(d):
 
@@ -115,7 +115,7 @@ def playerChooseFunc(d):
 
 
 
-
+@crossdomain(origin='*')
 @socketio.on('refreshGlobalsRequest', namespace='/test')
 def refreshGlobalsFunc(d):
 
@@ -127,7 +127,7 @@ def refreshGlobalsFunc(d):
 
 
 
-
+@crossdomain(origin='*')
 @socketio.on('popPlayerRequest', namespace='/test')
 def popPlayerFunc(d):
 
@@ -158,7 +158,7 @@ def popPlayerFunc(d):
 
 
 
-
+@crossdomain(origin='*')
 @socketio.on('createCanvasRequest', namespace='/test')
 def createCanvasFunc(d):
 
@@ -277,7 +277,7 @@ def createCanvasFunc(d):
 	emit('createCanvasPush', {"rectList":rectList, "prizeList":prizeList, "baddieList":baddieList, 'bgcolor':bgcolor, 'canvasDim':canvasDim}, broadcast=True,) 
 
 
-
+@crossdomain(origin='*')
 @socketio.on('keypressRequest', namespace='/test')
 def keypressFunc(d):
 
@@ -309,7 +309,7 @@ def keypressFunc(d):
 		emit('keypressPush', {"ipDict":ipDict, "prizeList":prizeList, "baddieList":baddieList, "bonesList":bonesList}, broadcast=True,) 
 
 
-
+@crossdomain(origin='*')
 @socketio.on('attackRequest', namespace='/test')
 def attackFunc(d):
 
@@ -350,7 +350,7 @@ def attackFunc(d):
 		emit('keypressPush', {"ipDict":ipDict, "ip":ip, "prizeList":prizeList, "baddieList":baddieList, "bonesList":bonesList}, broadcast=True,) 
 
 
-
+@crossdomain(origin='*')
 @socketio.on('incrementBagGuysPositionRequest', namespace='/test')
 def incrementBagGuysPositionFunc(d):
 
