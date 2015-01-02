@@ -4,6 +4,9 @@ $("body").append("<div class='startText' id='title'>WIZARD PEOPLE</div>")
 $("body").append("<div class='startText' id='instructions'>CLICK TO SELECT A WIZARD</div>")
 $("body").append("<div class='startText' id='instructions2'>WAIT FOR OTHER PLAYERS</div>")
 $("body").append("<div class='startText' id='instructions3'>PRESS ENTER TO BEGIN</div>")
+
+$("body").append("<div class='startText' id='instructions4'>A,S,W,D TO MOVE</div>")
+$("body").append("<div class='startText' id='instructions5'>SPACEBAR TO ATTACK</div>")
 // $("body").append("<h1 id='instruction' class='centered'>CLICK TO SELECT A WIZARD, ENTER TO PLAY</h1>")
 
 
@@ -32,6 +35,8 @@ var wizard_yel_right = new Image();
 var bones = new Image();
 var rat_left = new Image();
 var rat_right = new Image();
+var gobking_left = new Image();
+var gobking_right = new Image();
 
 // coin.src = "static/images/coin.png";
 // ruby.src = "static/images/ruby.png";
@@ -50,6 +55,9 @@ var rat_right = new Image();
 // rat_right.src = "static/images/rat_right.png";
 
 //album: http://i.imgur.com/wkONQZ8.png
+
+gobking_left.src = "static/images/gobking_left.png";
+gobking_right.src = "static/images/gobking_right.png";
 
 coin.src = "https://i.imgur.com/wOxaRHq.png";
 ruby.src = "https://i.imgur.com/bAsFNAZ.png"
@@ -226,15 +234,13 @@ socket.on('connectPush', function(d) {
     
 
     colsDict = d.colsDict
-    // console.log(colsDict)
-
     redTextToPrint = colsDict['red'];
 	bluTextToPrint = colsDict['blu'];
 	greTextToPrint = colsDict['gre'];
 	yelTextToPrint = colsDict['yel'];
 
     updatestartScreen();
-    return false;
+
 });
 
 drawstartScreen();
@@ -318,14 +324,14 @@ socket.on('keypressPush', function(d) {
 
 
 
-function createCanvas(rL,pL,bL) {
+// function createCanvas(rL,pL,bL) {
 
-	// rectList = rL;
-	// prizeList = pL;
-	// baddieList = bL;
-	// listenForKeypressLoop();
+// 	// rectList = rL;
+// 	// prizeList = pL;
+// 	// baddieList = bL;
+// 	// listenForKeypressLoop();
 
-}
+// }
 
 
 
@@ -356,12 +362,14 @@ function draw() {
 		
 		image = bones;
 
-		ctx.drawImage(image, bonesList[i].x, bonesList[i].y, 25, 25);
+		ctx.drawImage(image, bonesList[i].x, bonesList[i].y, bonesList[i].h*0.8, bonesList[i].h*0.8);
 	}
 
 	//baddies
 	for (i = 0; i < baddieList.length; i++) { 
 		
+			
+
 			if (baddieList[i]['type'] == 'goblin'){
 				img_right = goblin_right;
 				img_left = goblin_left;
@@ -369,6 +377,11 @@ function draw() {
 			else if (baddieList[i]['type'] == 'rat'){
 				img_right = rat_right;
 				img_left = rat_left;
+			}
+			else if (baddieList[i]['type'] == 'gobking'){
+
+				img_right = gobking_right;
+				img_left = gobking_left;
 			}
 
 
@@ -378,6 +391,21 @@ function draw() {
 			else{
 				image = img_left;
 			}
+
+			cx = baddieList[i]['x'] + baddieList[i]['w']/2
+			cy = baddieList[i]['y'] + baddieList[i]['h']/2
+
+			ctx.fillStyle = "#CC1100";
+			ctx.beginPath();
+			ctx.arc(
+				cx,
+				cy,
+				baddieList[i]['r'],
+				0, 
+				Math.PI * 2
+			);
+			ctx.closePath();
+			ctx.fill();
 
 		ctx.drawImage(image, baddieList[i].x, baddieList[i].y, baddieList[i].w, baddieList[i].h);
 	}
@@ -482,26 +510,20 @@ window.addEventListener('keyup',function(e){
 				//w 119
 				if(keyState[87]) {
 					y -= stepSize;
-					// socket.emit('keypressRequest', {"dx": x, "dy": y});
 				}
 				//a 97
 				if(keyState[65]) {
 					x -= stepSize;
-					// socket.emit('keypressRequest', {"dx": x, "dy": y});
 				}
 				// s 115
 				if(keyState[83]){
 					y += stepSize;
-					// socket.emit('keypressRequest', {"dx": x, "dy": y});
 				}
 				// d 100
 				if(keyState[68]) {
 					x += stepSize;
-					// socket.emit('keypressRequest', {"dx": x, "dy": y});
 				}
 
-				// socket.emit('keypressRequest', {"dx": x, "dy": y});
-				
 				//speed up uni-diectional movement 
 				//since you travel farther in diagnola
 				if (x == 0){

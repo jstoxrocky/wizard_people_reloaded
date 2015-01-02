@@ -241,15 +241,24 @@ def createCanvasFunc(d):
 	baddieNum = canvasDim['w']*canvasDim['h']/100960
 	baddieDirList = [1,-1]
 	
-	goblinSpecs = {"type":"goblin", "speed":4, "action":"patrol", "w":35, "h":35}
-	ratSpecs = {"type":"rat", "speed":8, "action":"random","w":104*0.4,"h":50*0.4}
+	goblinSpecs = {"type":"goblin", "speed":4, "action":"patrol", "w":35, "h":35, "lives":1, "attack":0}
+	ratSpecs = {"type":"rat", "speed":8, "action":"random","w":104*0.4,"h":50*0.4, "lives":1, "attack":0}
+	gobkingSpecs = {"type":"gobking", "speed":2, "action":"patrol","w":60,"h":60, "lives":3, "attack":1}
 
-	while len(baddieList) < baddieNum:
 
-		if len(baddieList) > baddieNum*1/4.0:
-			baddieSpecs = goblinSpecs
-		else:
-			baddieSpecs = ratSpecs
+	creaturesBreakownDict = {'goblin': {'specs':goblinSpecs, 'quant':int(0.5*baddieNum)}, 
+							 'rat':{'specs':ratSpecs, 'quant':int(0.35*baddieNum)}, 
+							 'gobking':{'specs':gobkingSpecs, 'quant':int(0.15*baddieNum)}}
+
+	baddieBreakdownList =[]
+	for name, nameDict in creaturesBreakownDict.iteritems():
+		for i in range(0,nameDict['quant']):
+			baddieBreakdownList.append(nameDict['specs'])
+
+	creatureCount = 0
+	while len(baddieList) < baddieNum-1:
+
+		baddieSpecs = baddieBreakdownList[creatureCount]
 
 		temp = {
 			"x":randint(200,canvasDim['w']-100),
@@ -259,15 +268,22 @@ def createCanvasFunc(d):
 			"dir":baddieDirList[randint(0,1)],
 			"action": baddieSpecs["action"],
 			"speed": baddieSpecs["speed"],
-			"type": baddieSpecs["type"]
+			"type": baddieSpecs["type"],
+			"lives": baddieSpecs["lives"],
+			"r":0,
+			"attack": baddieSpecs["attack"],
 			}
 
-		c = 0
+		# c = 0
+		goodToPlace = True
 		for rect in rectList:
 			if sqOnSqCollision(temp, rect):
-				c += 1
+				# c += 1
+				goodToPlace = False
 				break
-		if c==0:
+		# if c==0:
+		if goodToPlace:
+			creatureCount += 1
 			baddieList.append(temp)
 
 	emit('createCanvasPush', {"rectList":rectList, "prizeList":prizeList, "baddieList":baddieList, 'bgcolor':bgcolor, 'canvasDim':canvasDim, 'globalHeaduid':globalHeaduid}, broadcast=True,) 
@@ -333,8 +349,11 @@ def attackFunc(d):
 
 		for index, baddie in enumerate(baddieList):
 			if collision(auraDict, baddie) and uidDict[uid]['state'] == 'attack':
-				bonesList.append({'x':baddie['x'],'y':baddie['y']})
-				baddieList.pop(index)
+				baddie['lives'] -= 1
+				baddie['r'] = 50
+				if baddie['lives'] <= 0:
+					bonesList.append({'x':baddie['x'],'y':baddie['y'], 'h':baddie['h']})
+					baddieList.pop(index)
 
 
 		for index, eachuid in enumerate(uidDict.keys()):
@@ -469,9 +488,12 @@ def gameLoopFunc(d):
 			
 			#check for collisions
 			if checkCollisionWithBaddie(uidDict[uid], baddie, i, uid):
+				baddie['lives'] -= 1
+				baddie['r'] = 50
+				if baddie['lives'] <= 0:
+					bonesList.append({'x':baddie['x'],'y':baddie['y'], 'h':baddie['h']})
+					baddieList.pop(i)
 
-				baddieList.pop(i)
-				bonesList.append({'x':baddie['x'],'y':baddie['y']})
 				getHurt(uidDict[uid], uid)
 
 				#break beacuse if we remove uid from uidDict the loop changs
@@ -485,6 +507,9 @@ def gameLoopFunc(d):
 
 	#check for baddie bounds and move baddies
 	for i, baddie in enumerate(baddieList):
+
+		if baddie['r'] > 0:
+			baddie['r'] -= 10
 
 		#get chase direction if players nearby
 		ddx, ddy = getChaseDirection(baddie)
@@ -560,6 +585,16 @@ def getChaseDirection(baddie):
 			ddy = -(baddie['speed'] + randint(0,2))
 		else:
 			ddy = (baddie['speed'] + randint(0,2))
+
+
+			
+		if baddie['attack'] > 0:
+			baddie['w'] = baddie['w']*3.0
+
+		if baddie['attack'] < 0:
+			baddie['w'] = baddie['w']/3.0
+
+		baddie['attack'] = baddie['attack']*-1
 	
 	else:
 
