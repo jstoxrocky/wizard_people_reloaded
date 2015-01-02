@@ -30,6 +30,7 @@ colsChosen = {}
 globalHeadip = -1
 
 #FLASK
+@crossdomain(origin='*')
 @app.route('/')
 def index():
 	return render_template('main.html')
