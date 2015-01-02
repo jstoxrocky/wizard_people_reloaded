@@ -391,11 +391,13 @@ def incrementBagGuysPositionFunc(d):
 
 				#if loop continues checking for baddies after a baddie in the loop
 				#got rid of the last player
-				if not ipDict:
-					break
+				# if not ipDict:
+				# 	break
 
 				#check for collisions
 				collisionWithBaddie(ipDict[ip], baddie, i, ip)
+				if not ip in ipDict:
+					break
 				# try:
 				# 	collisionWithBaddie(ipDict[ip], baddie, i, ip)
 				# except:
