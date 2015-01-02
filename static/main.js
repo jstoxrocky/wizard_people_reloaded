@@ -187,8 +187,15 @@ $(document).keypress(function(e) {
 
 
 
-var host = location.origin;
-var socket = io.connect(host, {port: PORT, transports: ["websocket"]});
+// var host = location.origin;
+var host = 'https://' + document.domain;
+var socket = io.connect(host, {port: location.port, transports: ["websocket"]});
+
+
+console.log(host);
+console.log('https://' + document.domain);
+console.log(socket);
+
 
 //connection Request
 // var socket = io.connect('https://' + document.domain + ':' + location.port + '/test');
