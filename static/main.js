@@ -187,8 +187,11 @@ $(document).keypress(function(e) {
 
 
 
+// var host = location.origin;
+// io.connect(host, {port: PORT, transports: ["websocket"]});
+
 //connection Request
-var socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
+var socket = io.connect('https://' + document.domain + ':' + location.port + '/test');
 
 
 
