@@ -10,7 +10,6 @@ from flask import Flask, render_template, request, jsonify, session
 from flask.ext.socketio import SocketIO, emit
 import urllib, json
 from random import randint
-import threading
 
 #start me up!
 app = Flask(__name__)
@@ -29,6 +28,7 @@ colsChosen = {}
 globalHeadip = -1
 
 #FLASK
+@crossdomain(origin='*')
 @app.route('/')
 def index():
 	return render_template('main.html')
