@@ -503,6 +503,7 @@ def refreshGlobals():
 	global uidCount
 	global bonesList
 	global colsChosen
+	global canvasDim
 
 	ipDict = {}
 	rectList = []
