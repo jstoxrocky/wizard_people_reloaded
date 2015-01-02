@@ -7,7 +7,7 @@ $("body").append("<div class='startText' id='instructions3'>PRESS ENTER TO BEGIN
 // $("body").append("<h1 id='instruction' class='centered'>CLICK TO SELECT A WIZARD, ENTER TO PLAY</h1>")
 
 
-var ipDict;
+var uidDict;
 var canvas;
 var ctx;
 var rectList;
@@ -73,7 +73,7 @@ var wizColorDict = {"red":[wizard_red_left,wizard_red_right],
 					"yel":[wizard_yel_left,wizard_yel_right],
 					}
 
-var prizeTypeDict = {"coin":coin,
+var typeDict = {"coin":coin,
 					"ruby":ruby,
 					}
 
@@ -172,7 +172,7 @@ function clicker(){
 		}
 	}
 
-	if (ipDict == undefined){
+	if (uidDict == undefined){
 		socket.emit('playerChooseRequest', {"col":col});
 	}
 	
@@ -244,21 +244,19 @@ updatestartScreen();
 //refresh global variables Push
 socket.on('refreshGlobalsPush', function(d) {
 
-	// alert("PLAY AGAIN?");
-	// redTextToPrint = 0;
-	// bluTextToPrint = 0;
-	// greTextToPrint = 0;
-	// yelTextToPrint = 0;
-
     console.log(d.msg);
     clearTimeout(timer);
-    // updatestartScreen();
-    // clicker();
     location.reload();
-
 
 });
 
+var uid;
+socket.on('assignUIDPush', function(d) {
+
+    console.log(d.uid);
+    uid = d.uid
+
+});
 
 
 //refresh global variables Push
@@ -274,36 +272,33 @@ socket.on('popPlayerPush', function(d) {
 });
 
 
-//on document load  create Canvas request
-//socket.emit('createCanvasRequest', {"w":document.body.clientWidth, "h":document.body.clientHeight});
-
 //create canvas Push
 var bgcolor;
+var globalHeaduid = -1;
 socket.on('createCanvasPush', function(d) {
-    // $("body").css({"backgroundColor":d['bgcolor']});
+
     $("body").css({"backgroundColor":"#35373b"});
-
+    globalHeaduid = d.globalHeaduid;
     bgcolor = d['bgcolor'];
-
-    // ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // console.log(d.canvasDim['w']);
-    // console.log(d.canvasDim['h']);
     canvas.width = d.canvasDim['w'];
 	canvas.height = d.canvasDim['h'];
-	// ctx = canvas.getContext("2d");
+    // createCanvas(d.rectList, d.prizeList, d.baddieList);
 
+    globalHeaduid = d.globalHeaduid;
+    console.log(globalHeaduid);
 
-    createCanvas(d.rectList, d.prizeList, d.baddieList);
-    // gameLoop();
-
+    rectList = d.rectList;
+	prizeList = d.prizeList;
+	baddieList = d.baddieList;
+	listenForKeypressLoop();
 
 });
 
 //game loop Push
-socket.on('incrementBagGuysPositionPush', function(d) {
+socket.on('gameLoopPush', function(d) {
     baddieList = d.baddieList;
     bonesList = d.bonesList;
-    ipDict = d.ipDict;
+    uidDict = d.uidDict;
     draw();
 });
 
@@ -313,7 +308,7 @@ socket.on('keypressPush', function(d) {
 	prizeList = d.prizeList;
 	baddieList = d.baddieList;
 	bonesList = d.bonesList;
-    ipDict = d.ipDict;
+    uidDict = d.uidDict;
     draw();
 
 });
@@ -325,11 +320,10 @@ socket.on('keypressPush', function(d) {
 
 function createCanvas(rL,pL,bL) {
 
-	rectList = rL;
-	prizeList = pL;
-	baddieList = bL;
-	gameLoop();
-	// socket.emit('incrementBagGuysPositionRequest', {});
+	// rectList = rL;
+	// prizeList = pL;
+	// baddieList = bL;
+	// listenForKeypressLoop();
 
 }
 
@@ -353,7 +347,7 @@ function draw() {
 	//prizes
 	for (i = 0; i < prizeList.length; i++) { 
 
-		ctx.drawImage(prizeTypeDict[prizeList[i].prizeType], prizeList[i].x, prizeList[i].y, prizeList[i].w, prizeList[i].h);
+		ctx.drawImage(typeDict[prizeList[i].type], prizeList[i].x, prizeList[i].y, prizeList[i].w, prizeList[i].h);
 	
 	}
 
@@ -392,10 +386,10 @@ function draw() {
 
 	//players
 	offset = 0
-	ipList = Object.keys(ipDict)
-	for (i = 0; i < ipList.length; i++) { 
+	uidList = Object.keys(uidDict)
+	for (i = 0; i < uidList.length; i++) { 
 
-		p = ipDict[ipList[i]]
+		p = uidDict[uidList[i]]
 
 		cx = p['x'] + p['w']/2
 		cy = p['y'] + p['h']/2
@@ -457,7 +451,8 @@ window.addEventListener('keyup',function(e){
     keyState[e.keyCode || e.which] = false;
 },true);
 
-function gameLoop() {
+// function gameLoop() {
+	function listenForKeypressLoop() {
 	
 		// draw();
 
@@ -510,10 +505,10 @@ function gameLoop() {
 				//speed up uni-diectional movement 
 				//since you travel farther in diagnola
 				if (x == 0){
-					y = y*1.42
+					y = y*1.35
 				}
 				if (y == 0){
-					x = x*1.42
+					x = x*1.35
 				}
 
 				socket.emit('keypressRequest', {"dx": x, "dy": y});
@@ -521,13 +516,15 @@ function gameLoop() {
 
 		}
 
-		timer  = setTimeout(gameLoop, 20);
+		timer  = setTimeout(listenForKeypressLoop, 20);
 
 		gameCount = gameCount + 1;
 
 		if (gameCount == 5){
-			socket.emit('incrementBagGuysPositionRequest', {});
-			gameCount = 1
+			if (uid == globalHeaduid){
+				socket.emit('gameLoopRequest', {});
+				gameCount = 1
+			}
 		}
 
 }

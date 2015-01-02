@@ -21,7 +21,7 @@ app.debug = True
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
-ipDict = {}
+uidDict = {}
 rectList = []
 prizeList = []
 bonesList = []
@@ -29,7 +29,8 @@ baddieList = []
 canvasDim = {}
 uidCount = 0
 colsChosen = {}
-globalHeadip = -1
+globalHeaduid = -1 #specific id that will cause the game loop to execute
+					#if not game loop executes more times with more players
 
 #FLASK
 @app.route('/')
@@ -40,46 +41,43 @@ def index():
 @socketio.on('connect', namespace='/test')
 def connectFunc():
 
-	# import global playerList and uidCount (combine with player count?)
 	global uidCount
 	global rectList
-	global ipDict
-	global colsChosen
+	global uidDict
 
 	if rectList:
 		msg = "Game in progress. Try again later."
 		emit('gameInProgressPush', {"msg":msg}, broadcast=False,) 
 	else:
 
-		# if not ipDict:
-			# uidCount = 0
-
-		#give uid equal to uidCount
+		#give an id to this session
 		session['uid'] = uidCount
 		uidCount += 1
 		msg = "New connection"
 
-		colsDict = {'red':0,'blu':0,'gre':0,'yel':0}
-		for val in colsChosen.values():
-			# c = colsDict.get(val, 0)
-			colsDict[val] += 1
-
-		# print(colsDict)
+		#get a dictionary of colors that players play
+		colsDict = getColsDict()
 
 		emit('connectPush', {"msg":msg, 'colsDict':colsDict}, broadcast=True,) 
+
+
+
+
 
 
 
 @socketio.on('playerChooseRequest', namespace='/test')
 def playerChooseFunc(d):
 
-
-	#import global playerList and uidCount (combine with player count?)
-	global ipDict
+	global uidDict
 	global colsChosen
-	global globalHeadip
+	global globalHeaduid
 
-	ip = session['uid']
+	try:
+		uid = session['uid']
+	except:
+		# uid = -1
+		return None
 	
 	playerDict = {
 		"x": 10,
@@ -89,28 +87,21 @@ def playerChooseFunc(d):
 		"c": d['col'],
 		"cc": "#CD96CD",
 		"r": 0,
-		"id": ip,
+		"id": uid,
 		"state": 'rest',
 		"health": {"hearts":u'♥♥♥',"level":3},
 	}
 
-	ipDict[ip] = playerDict
+	uidDict[uid] = playerDict
 
-	colsChosen[ip] = d['col']
+	colsChosen[uid] = d['col']
 
-	colsDict = {'red':0,'blu':0,'gre':0,'yel':0}
-	for val in colsChosen.values():
-		# c = colsDict.get(val, 0)
-		colsDict[val] += 1
+	colsDict = getColsDict()
 
-	# print(colsDict)
+	globalHeaduid = min(uidDict.keys())
 
-	# print(ipDict.keys())
-	globalHeadip = min(ipDict.keys())
-	# print(globalHeadip)
-
-
-	msg = "Player {uid} chose {col} wizard.".format(uid=ip,col=d['col'])
+	msg = "Player {uid} chose {col} wizard.".format(uid=uid,col=d['col'])
+	emit('assignUIDPush', {'uid':uid}, broadcast=False,) 
 	emit('playerChoosePush', {"msg":msg, 'colsDict':colsDict}, broadcast=True,) 
 
 
@@ -133,30 +124,28 @@ def refreshGlobalsFunc(d):
 @socketio.on('popPlayerRequest', namespace='/test')
 def popPlayerFunc(d):
 
-	# try:
 
-	global ipDict
-	global globalHeadip
+	global uidDict
+	global globalHeaduid
 	
+	# if True:
 	try:
-		ip = session['uid']
+		uid = session['uid']
 	except:
-		ip = -1
+		# uid = -1
+		return None
 
-	if ip in ipDict and ipDict:
+	if uid in uidDict and uidDict:
 
-		ipDict.pop(session['uid'])
+		uidDict.pop(session['uid'])
 		
-		if not ipDict:
+		if not uidDict:
 			refreshGlobals()
 		else:
-			globalHeadip = min(ipDict.keys())
+			globalHeaduid = min(uidDict.keys())
 
 		msg = "Player popped"
 		emit('popPlayerPush', {"msg":msg}, broadcast=True,) 
-
-	# except:
-	# 	pass
 
 
 
@@ -164,12 +153,13 @@ def popPlayerFunc(d):
 @socketio.on('createCanvasRequest', namespace='/test')
 def createCanvasFunc(d):
 
-	# global ipDict
+	# global uidDict
 	global rectList
 	global prizeList
 	global baddieList
 	global canvasDim
 	global bonesList
+	global globalHeaduid
 
 	#need to restart these vars each time someone joins
 	rectList = []
@@ -177,19 +167,18 @@ def createCanvasFunc(d):
 	baddieList = []
 	bonesList = []
 
-	ip = session['uid']
+	uid = session['uid']
 
-	canvasDim['w'] = canvasDim.get('w', 1000000)
-	canvasDim['h'] = canvasDim.get('h', 1000000)
+	canvasDim['w'] = canvasDim.get('w',d['w'])
+	canvasDim['h'] = canvasDim.get('h',d['h'])
 
 	if d['w'] < canvasDim['w']:
 		canvasDim['w'] = d['w']
+
 	if d['h'] < canvasDim['h']:
 		canvasDim['h'] = d['h']
 
 	#select level and colors
-	#push most of this to browser
-	# googleColorList = ['#0266C8', '#F90101', '#F2B50F', '#00933B']
 	levelList = ['cave', 'grassy', 'icy', 'sand']
 	levelNum = randint(0,len(levelList)-1)
 
@@ -206,7 +195,6 @@ def createCanvasFunc(d):
 		colorList = ['#956c4b','#905120', '#502d12', '#d4803f', "#b08563"]
 		bgcolor = '#edd9af'
 
-
 	#create rectangles
 	rectNum = canvasDim['w']*canvasDim['h']/91022
 	for i in range(0,rectNum):
@@ -222,17 +210,23 @@ def createCanvasFunc(d):
 	#create prizes
 	prizeNum = canvasDim['w']*canvasDim['h']/32768
 	success = 0
+
+	rubySpecs = {"type":'ruby',"value":5}
+	coinSpecs = {"type":'coin',"value":1}
+
 	while len(prizeList) < prizeNum:
 
-		prizeType = 'coin'
-		if success % 7 == 0:
-			prizeType = 'ruby'
+		if len(prizeList) > prizeNum*1/4.0:
+			prizeSpecs = coinSpecs
+		else:
+			prizeSpecs = rubySpecs
 
 		temp = {"x":randint(100,canvasDim['w']-100),
 			"y":randint(100,canvasDim['h']-100),
 			"w":25,
 			"h":25,
-			"prizeType":prizeType,
+			"type":prizeSpecs['type'],
+			"value":prizeSpecs['value'],
 			}
 
 		c = 0
@@ -276,167 +270,247 @@ def createCanvasFunc(d):
 		if c==0:
 			baddieList.append(temp)
 
-	emit('createCanvasPush', {"rectList":rectList, "prizeList":prizeList, "baddieList":baddieList, 'bgcolor':bgcolor, 'canvasDim':canvasDim}, broadcast=True,) 
+	emit('createCanvasPush', {"rectList":rectList, "prizeList":prizeList, "baddieList":baddieList, 'bgcolor':bgcolor, 'canvasDim':canvasDim, 'globalHeaduid':globalHeaduid}, broadcast=True,) 
 
 
 
 @socketio.on('keypressRequest', namespace='/test')
 def keypressFunc(d):
 
-	global ipDict
+	global uidDict
 	global baddieList
 
+	# if True:
 	try:
-		ip = session['uid']
+		uid = session['uid']
 	except:
-		ip = -1
+		# uid = -1
+		return None
 
-	if ip in ipDict and ipDict:
+	if uid in uidDict and uidDict:
 
 		#incrememnt move
-		ipDict[ip]['x'] += d['dx']
-		ipDict[ip]['y'] += d['dy']
-		ipDict[ip]['dx'] = d['dx']
-		ipDict[ip]['dy'] = d['dy']
+		uidDict[uid]['x'] += d['dx']
+		uidDict[uid]['y'] += d['dy']
+		uidDict[uid]['dx'] = d['dx']
+		uidDict[uid]['dy'] = d['dy']
 
 		#control for collisions with canvas boundaries
-		ipDict[ip] = collisionWithCanvasBounds(ipDict[ip])
+		uidDict[uid] = collisionWithCanvasBounds(uidDict[uid])
 
 		#control for collisions with rectangles
-		ipDict[ip] = collisionWithRect(ipDict[ip])
+		uidDict[uid] = collisionWithRect(uidDict[uid])
 
 		#control for collisions with prizes
-		ipDict[ip] = collisionWithPrize(ipDict[ip])
+		uidDict[uid] = collisionWithPrize(uidDict[uid])
 
-		emit('keypressPush', {"ipDict":ipDict, "prizeList":prizeList, "baddieList":baddieList, "bonesList":bonesList}, broadcast=True,) 
+		emit('keypressPush', {"uidDict":uidDict, "prizeList":prizeList, "baddieList":baddieList, "bonesList":bonesList}, broadcast=True,) 
 
 
 
 @socketio.on('attackRequest', namespace='/test')
 def attackFunc(d):
 
-	global ipDict
+	global uidDict
 	global baddieList
 	global bonesList
 
+	# if True:
 	try:
-		ip = session['uid']
+		uid = session['uid']
 	except:
-		ip = -1
+		# uid = -1
+		return None
 
-	if ip in ipDict and ipDict:
+	if uid in uidDict and uidDict:
 
-		ipDict[ip]['state'] = 'attack'
-		ipDict[ip]['r'] = 40
+		uidDict[uid]['state'] = 'attack'
+		uidDict[uid]['r'] = 40
 
-		auraDict = {'x':ipDict[ip]['x'] + ipDict[ip]['w']/2, 
-					'y':ipDict[ip]['y'] + ipDict[ip]['h']/2, 
-					'r': ipDict[ip]['r']}
+		auraDict = {'x':uidDict[uid]['x'] + uidDict[uid]['w']/2, 
+					'y':uidDict[uid]['y'] + uidDict[uid]['h']/2, 
+					'r': uidDict[uid]['r']}
 
 		for index, baddie in enumerate(baddieList):
-			if collision(auraDict, baddie) and ipDict[ip]['state'] == 'attack':
+			if collision(auraDict, baddie) and uidDict[uid]['state'] == 'attack':
 				bonesList.append({'x':baddie['x'],'y':baddie['y']})
 				baddieList.pop(index)
 
 
-		for index, eachip in enumerate(ipDict.keys()):
+		for index, eachuid in enumerate(uidDict.keys()):
 
-			if eachip != ip:
+			if eachuid != uid:
 
-				if collision(auraDict, ipDict[eachip]) and ipDict[ip]['state'] == 'attack':
+				if collision(auraDict, uidDict[eachuid]) and uidDict[uid]['state'] == 'attack':
 
-					getHurt(ipDict[eachip], eachip)
-
-
-
-		emit('keypressPush', {"ipDict":ipDict, "ip":ip, "prizeList":prizeList, "baddieList":baddieList, "bonesList":bonesList}, broadcast=True,) 
+					getHurt(uidDict[eachuid], eachuid)
 
 
 
-@socketio.on('incrementBagGuysPositionRequest', namespace='/test')
-def incrementBagGuysPositionFunc(d):
+		emit('keypressPush', {"uidDict":uidDict, "uid":uid, "prizeList":prizeList, "baddieList":baddieList, "bonesList":bonesList}, broadcast=True,) 
 
-		global baddieList
-		global ipDict
-		global bonesList
-		global prizeList
 
-		if not ipDict:
-			refreshGlobals()
 
-		try:
-			ip = session['uid']	
-		except:
-			ip = -1
+# @socketio.on('gameLoopRequest', namespace='/test')
+# def gameLoopFunc(d):
 
-		#restart level if all coins obtained
-		if not prizeList:
-			refreshGlobals()
-			msg = "Global variables refreshed."
-			emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
+# 		global baddieList
+# 		global uidDict
+# 		global bonesList
+# 		global prizeList
 
-		if ip in ipDict and ipDict:
+# 		# if not uidDict:
+# 		# 	refreshGlobals()
 
-			if ipDict[ip]['r'] > 0 and ipDict[ip]['state'] == 'attack':
-				ipDict[ip]['cc'] = '#CD96CD'
-				ipDict[ip]['r'] -=  10
+# 		#This needed as sometimes the game loop continues ofter sessions are removed
+# 		try:
+# 			uid = session['uid']	
+# 		except:
+# 			uid = -1
 
-			else:
+# 		#restart level if all coins obtained
+# 		if not prizeList:
+# 			refreshGlobals()
+# 			msg = "Global variables refreshed."
+# 			emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
 
-				ipDict[ip]['r'] = 0
-				ipDict[ip]['cc'] = '#CD96CD'
-				ipDict[ip]['state'] = 'rest'
+# 		if uid in uidDict and uidDict:
 
-			for i, baddie in enumerate(baddieList):
+# 			if uidDict[uid]['r'] > 0 and uidDict[uid]['state'] == 'attack':
+# 				uidDict[uid]['cc'] = '#CD96CD'
+# 				uidDict[uid]['r'] -=  10
 
-				#if loop continues checking for baddies after a baddie in the loop
-				#got rid of the last player
-				# if not ipDict:
-				# 	break
+# 			else:
 
-				#check for collisions
-				collisionWithBaddie(ipDict[ip], baddie, i, ip)
-				if not ip in ipDict:
-					break
-				# try:
-				# 	collisionWithBaddie(ipDict[ip], baddie, i, ip)
-				# except:
-				# 	print(ip)
-				# 	print(ipDict.keys())
-				# 	assert(False)
+# 				uidDict[uid]['r'] = 0
+# 				uidDict[uid]['cc'] = '#CD96CD'
+# 				uidDict[uid]['state'] = 'rest'
 
-				if ipDict and ip == globalHeadip:
-
-					#get chase direction if players nearby
-					ddx, ddy = getChaseDirection(baddie)
-					
-
-					#increment baddie position accordingly
-					baddie['x'] += ddx
-					baddie['y'] += ddy
-					baddie['dx'] = ddx
-					baddie['dy'] = ddy
-
-					if (baddie['x'] < 0 or baddie['x']+baddie['w'] > canvasDim['w']):
-						baddie['dir'] = baddie['dir']*-1
-
-					for rect in rectList:
-						if sqOnSqCollision(baddie, rect):
-							baddie['dir'] = baddie['dir']*-1
-
-					#control for collisions with canvas boundaries
-					baddie = collisionWithCanvasBounds(baddie)
-
-					#control for collisions with rectangles
-			
-					baddie = collisionWithRect(baddie)
+# 			for i, baddie in enumerate(baddieList):
 				
-			emit('incrementBagGuysPositionPush', {"ipDict": ipDict, "baddieList":baddieList, "bonesList": bonesList}, broadcast=True,) 
+# 				#check for collisions
+# 				collisionWithBaddie(uidDict[uid], baddie, i, uid)
+
+# 				#if loop continues checking for baddies after a baddie in the loop
+# 				#got rid of the last player
+# 				if not uid in uidDict:
+# 					break
+
+# 				if uidDict and uid == globalHeaduid:
+# 				# if True:
+
+# 					#get chase direction if players nearby
+# 					ddx, ddy = getChaseDirection(baddie)
+					
+# 					#increment baddie position accordingly
+# 					baddie['x'] += ddx
+# 					baddie['y'] += ddy
+# 					baddie['dx'] = ddx
+# 					baddie['dy'] = ddy
+
+# 					if (baddie['x'] < 0 or baddie['x']+baddie['w'] > canvasDim['w']):
+# 						baddie['dir'] = baddie['dir']*-1
+
+# 					for rect in rectList:
+# 						if sqOnSqCollision(baddie, rect):
+# 							baddie['dir'] = baddie['dir']*-1
+
+# 					#control for collisions with canvas boundaries
+# 					baddie = collisionWithCanvasBounds(baddie)
+
+# 					#control for collisions with rectangles
+# 					baddie = collisionWithRect(baddie)
+				
+# 			emit('gameLoopPush', {"uidDict": uidDict, "baddieList":baddieList, "bonesList": bonesList}, broadcast=True,) 
 
 
 		
 
 
+@socketio.on('gameLoopRequest', namespace='/test')
+def gameLoopFunc(d):
+
+	global baddieList
+	global uidDict
+	global bonesList
+	global prizeList
+
+	#This needed as sometimes the game loop continues after sessions are removed
+	try:
+		uid = session['uid']	
+	except:
+		# uid = -1
+		return None
+
+	#restart level if all coins obtained
+	if not prizeList:
+		refreshGlobals()
+		msg = "Global variables refreshed."
+		emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
+
+	#for each uid
+	#we need to change its state and attack circle size
+	for uid in uidDict:
+
+		if uidDict[uid]['r'] > 0 and uidDict[uid]['state'] == 'attack':
+			uidDict[uid]['cc'] = '#CD96CD'
+			uidDict[uid]['r'] -=  10
+
+		else:
+
+			uidDict[uid]['r'] = 0
+			uidDict[uid]['cc'] = '#CD96CD'
+			uidDict[uid]['state'] = 'rest'
+
+
+	#check for collisions between each baddie and player
+	for i, baddie in enumerate(baddieList):
+		for uid in uidDict:
+			
+			#check for collisions
+			if checkCollisionWithBaddie(uidDict[uid], baddie, i, uid):
+
+				baddieList.pop(i)
+				bonesList.append({'x':baddie['x'],'y':baddie['y']})
+				getHurt(uidDict[uid], uid)
+
+				#break beacuse if we remove uid from uidDict the loop changs
+				break
+
+		#if loop continues checking for baddies after a baddie in the loop
+		#got rid of the last player
+		if not uid in uidDict:
+			break
+
+
+	#check for baddie bounds and move baddies
+	for i, baddie in enumerate(baddieList):
+
+		#get chase direction if players nearby
+		ddx, ddy = getChaseDirection(baddie)
+		
+		#increment baddie position accordingly
+		baddie['x'] += ddx
+		baddie['y'] += ddy
+		baddie['dx'] = ddx
+		baddie['dy'] = ddy
+
+		if (baddie['x'] < 0 or baddie['x']+baddie['w'] > canvasDim['w']):
+			baddie['dir'] = baddie['dir']*-1
+
+		for rect in rectList:
+			if sqOnSqCollision(baddie, rect):
+				baddie['dir'] = baddie['dir']*-1
+
+		#control for collisions with canvas boundaries
+		baddie = collisionWithCanvasBounds(baddie)
+
+		#control for collisions with rectangles
+		baddie = collisionWithRect(baddie)
+			
+
+
+	emit('gameLoopPush', {"uidDict": uidDict, "baddieList":baddieList, "bonesList": bonesList}, broadcast=True,) 
 
 
 
@@ -445,27 +519,38 @@ def incrementBagGuysPositionFunc(d):
 
 
 
+
+
+
+def getColsDict():
+
+	global colsChosen
+
+	colsDict = {'red':0,'blu':0,'gre':0,'yel':0}
+	for val in colsChosen.values():
+		colsDict[val] += 1
+	return colsDict
 
 
 def getChaseDirection(baddie):
 
-	global ipDict
+	global uidDict
 
 	targetList = []
-	for _ip in ipDict.keys():
+	for _uid in uidDict.keys():
 
-		xdif = baddie['x'] - ipDict[_ip]['x']
-		ydif = baddie['y'] - ipDict[_ip]['y']
+		xdif = baddie['x'] - uidDict[_uid]['x']
+		ydif = baddie['y'] - uidDict[_uid]['y']
 		eucDist = (xdif**2 + ydif**2)**0.5
 		if eucDist < 200:
-			targetList.append(_ip)
+			targetList.append(_uid)
 
 	if targetList:
 		targetList.sort()
-		target_ip = targetList[0]
+		target_uid = targetList[0]
 
-		xdif = baddie['x'] - ipDict[target_ip]['x']
-		ydif = baddie['y'] - ipDict[target_ip]['y']
+		xdif = baddie['x'] - uidDict[target_uid]['x']
+		ydif = baddie['y'] - uidDict[target_uid]['y']
 		if xdif > 0:
 			ddx = -(baddie['speed'] + randint(0,2))
 		else:
@@ -498,7 +583,7 @@ def getChaseDirection(baddie):
 
 def refreshGlobals():
 
-	global ipDict
+	global uidDict
 	global rectList
 	global prizeList
 	global baddieList
@@ -507,7 +592,7 @@ def refreshGlobals():
 	global colsChosen
 	global canvasDim
 
-	ipDict = {}
+	uidDict = {}
 	rectList = []
 	prizeList = []
 	baddieList = []
@@ -602,15 +687,28 @@ def collisionWithPrize(specificObjectDict):
 		if sqOnSqCollision(specificObjectDict, prize):
 			
 			c = specificObjectDict.get('score', 0)
-			if prize['prizeType'] == 'coin':
+			if prize['type'] == 'coin':
 				specificObjectDict['score'] = c + 1
-			elif prize['prizeType'] == 'ruby':
+			elif prize['type'] == 'ruby':
 				specificObjectDict['score'] = c + 5
 			prizeList.pop(index)
 			
 	return specificObjectDict
 
-def collisionWithBaddie(specificObjectDict, baddie, i, ip):
+# def collisionWithBaddie(specificObjectDict, baddie, i, uid):
+
+# 	global bonesList
+
+# 	# create collison for baddies
+# 	if sqOnSqCollision(specificObjectDict, baddie) and specificObjectDict['state'] == 'rest':
+# 		baddieList.pop(i)
+# 		bonesList.append({'x':baddie['x'],'y':baddie['y']})
+# 		# specificObjectDict = getHurt(specificObjectDict, uid)
+# 		getHurt(specificObjectDict, uid)
+
+# 	return specificObjectDict
+
+def collisionWithBaddie(specificObjectDict, baddie, i, uid):
 
 	global bonesList
 
@@ -618,16 +716,19 @@ def collisionWithBaddie(specificObjectDict, baddie, i, ip):
 	if sqOnSqCollision(specificObjectDict, baddie) and specificObjectDict['state'] == 'rest':
 		baddieList.pop(i)
 		bonesList.append({'x':baddie['x'],'y':baddie['y']})
-		# specificObjectDict = getHurt(specificObjectDict, ip)
-		getHurt(specificObjectDict, ip)
+		# specificObjectDict = getHurt(specificObjectDict, uid)
+		getHurt(specificObjectDict, uid)
 
 	return specificObjectDict
 
+def checkCollisionWithBaddie(specificObjectDict, baddie, i, uid):
+	return sqOnSqCollision(specificObjectDict, baddie) and specificObjectDict['state'] == 'rest'
 
-def getHurt(specificObjectDict, ip):
 
-	global ipDict
-	global globalHeadip
+def getHurt(specificObjectDict, uid):
+
+	global uidDict
+	global globalHeaduid
 
 	# specificObjectDict['w'] -= 10
 	# specificObjectDict['h'] -= 10
@@ -639,18 +740,16 @@ def getHurt(specificObjectDict, ip):
 
 	if specificObjectDict['health']['level'] <= 0: 
 	# if specificObjectDict['w'] <= 0:
-			ipDict.pop(ip, None)
-			
+			uidDict.pop(uid, None)
 
-
-			if not ipDict:
+			if not uidDict:
 				refreshGlobals()
 				msg = "Global variables refreshed."
 				emit('refreshGlobalsPush', {"msg":msg}, broadcast=True,) 
 			else:
-				globalHeadip = min(ipDict.keys())
+				globalHeaduid = min(uidDict.keys())
 				
-			# globalHeadip = min(ipDict.keys())
+			# globalHeaduid = min(uidDict.keys())
 
 	return specificObjectDict
 
