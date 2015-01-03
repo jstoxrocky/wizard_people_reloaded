@@ -37,6 +37,7 @@ var rat_left = new Image();
 var rat_right = new Image();
 var gobking_left = new Image();
 var gobking_right = new Image();
+var potion = new Image();
 
 // coin.src = "static/images/coin.png";
 // ruby.src = "static/images/ruby.png";
@@ -58,6 +59,7 @@ var gobking_right = new Image();
 
 gobking_left.src = "static/images/gobking_left.png";
 gobking_right.src = "static/images/gobking_right.png";
+potion.src = "static/images/potion.png";
 
 coin.src = "https://i.imgur.com/wOxaRHq.png";
 ruby.src = "https://i.imgur.com/bAsFNAZ.png"
@@ -75,6 +77,7 @@ bones.src = "https://i.imgur.com/cXrOQAK.png";
 rat_left.src = "https://i.imgur.com/GqhYJ7I.png";
 rat_right.src = "https://i.imgur.com/rg33icE.png";
 
+
 var wizColorDict = {"red":[wizard_red_left,wizard_red_right],
 					"blu":[wizard_blu_left,wizard_blu_right],
 					"gre":[wizard_gre_left,wizard_gre_right],
@@ -82,8 +85,8 @@ var wizColorDict = {"red":[wizard_red_left,wizard_red_right],
 					}
 
 var typeDict = {"coin":coin,
-					"ruby":ruby,
-					}
+				"ruby":ruby,
+				"potion":potion,}
 
 var googleColorDict = {'blu':'#0266C8', 'red':'#F90101', 'yel':'#F2B50F', 'gre':'#00933B'}
 

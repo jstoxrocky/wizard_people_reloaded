@@ -211,15 +211,24 @@ def createCanvasFunc(d):
 	prizeNum = canvasDim['w']*canvasDim['h']/32768
 	success = 0
 
-	rubySpecs = {"type":'ruby',"value":5}
-	coinSpecs = {"type":'coin',"value":1}
 
-	while len(prizeList) < prizeNum:
+	rubySpecs = {"type":'ruby',"value":5,"func":"addValue"}
+	coinSpecs = {"type":'coin',"value":1,"func":"addValue"}
+	potionSpecs = {"type":'potion',"value":1,"func":"addHealth"}
 
-		if len(prizeList) > prizeNum*1/4.0:
-			prizeSpecs = coinSpecs
-		else:
-			prizeSpecs = rubySpecs
+	prizeBreakownDict = {'ruby': {'specs':rubySpecs, 'quant':int(0.35*prizeNum)}, 
+							 'coin':{'specs':coinSpecs, 'quant':int(0.6*prizeNum)}, 
+							 'potion':{'specs':potionSpecs, 'quant':int(0.05*prizeNum)}}
+
+	prizeBreakdownList =[]
+	for name, nameDict in prizeBreakownDict.iteritems():
+		for i in range(0,nameDict['quant']):
+			prizeBreakdownList.append(nameDict['specs'])
+
+	prizeCount = 0
+	while len(prizeList) < len(prizeBreakdownList):
+
+		prizeSpecs = prizeBreakdownList[prizeCount]
 
 		temp = {"x":randint(100,canvasDim['w']-100),
 			"y":randint(100,canvasDim['h']-100),
@@ -227,15 +236,17 @@ def createCanvasFunc(d):
 			"h":25,
 			"type":prizeSpecs['type'],
 			"value":prizeSpecs['value'],
+			"func":prizeSpecs['func'],
 			}
 
-		c = 0
+
+		goodToPlace = True
 		for rect in rectList:
 			if sqOnSqCollision(temp, rect):
-				c += 1
+				goodToPlace = False
 				break
-		if c==0:
-			success += 1
+		if goodToPlace:
+			prizeCount += 1
 			prizeList.append(temp)
 				
 	baddieNum = canvasDim['w']*canvasDim['h']/100960
@@ -256,7 +267,8 @@ def createCanvasFunc(d):
 			baddieBreakdownList.append(nameDict['specs'])
 
 	creatureCount = 0
-	while len(baddieList) < baddieNum-1:
+	# while len(baddieList) < baddieNum-1:
+	while len(baddieList) < len(baddieBreakdownList):
 
 		baddieSpecs = baddieBreakdownList[creatureCount]
 
@@ -588,13 +600,13 @@ def getChaseDirection(baddie):
 
 
 			
-		if baddie['attack'] > 0:
-			baddie['w'] = baddie['w']*3.0
+		# if baddie['attack'] > 0:
+		# 	baddie['w'] = baddie['w']*3.0
 
-		if baddie['attack'] < 0:
-			baddie['w'] = baddie['w']/3.0
+		# if baddie['attack'] < 0:
+		# 	baddie['w'] = baddie['w']/3.0
 
-		baddie['attack'] = baddie['attack']*-1
+		# baddie['attack'] = baddie['attack']*-1
 	
 	else:
 
@@ -721,13 +733,31 @@ def collisionWithPrize(specificObjectDict):
 	for index, prize in enumerate(prizeList):
 		if sqOnSqCollision(specificObjectDict, prize):
 			
-			c = specificObjectDict.get('score', 0)
-			if prize['type'] == 'coin':
-				specificObjectDict['score'] = c + 1
-			elif prize['type'] == 'ruby':
-				specificObjectDict['score'] = c + 5
-			prizeList.pop(index)
+			# print(prize['func'])
+
+			funcDict = {"addValue":addValue, "addHealth":addHealth}
+			specificObjectDict = funcDict[prize['func']](specificObjectDict, prize, index)
+
+			# c = specificObjectDict.get('score', 0)
+			# specificObjectDict['score'] = c + prize['value']
+			# prizeList.pop(index)
 			
+	return specificObjectDict
+
+def addValue(specificObjectDict, prize, index):
+
+	global prizeList
+	c = specificObjectDict.get('score', 0)
+	specificObjectDict['score'] = c + prize['value']
+	prizeList.pop(index)
+	return specificObjectDict
+
+def addHealth(specificObjectDict, prize, index):
+
+	global prizeList
+	specificObjectDict['health']['hearts'] = specificObjectDict['health']['hearts'][::-1].replace(u'♡',u'♥',1)[::-1]
+	specificObjectDict['health']['level'] += 1
+	prizeList.pop(index)
 	return specificObjectDict
 
 # def collisionWithBaddie(specificObjectDict, baddie, i, uid):
