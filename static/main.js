@@ -56,10 +56,20 @@ var potion = new Image();
 // rat_right.src = "static/images/rat_right.png";
 
 //album: http://i.imgur.com/wkONQZ8.png
+//http://imgur.com/a/lvhHu
 
-gobking_left.src = "static/images/gobking_left.png";
-gobking_right.src = "static/images/gobking_right.png";
-potion.src = "static/images/potion.png";
+// gobking_left.src = "static/images/gobking_left.png";
+// gobking_right.src = "static/images/gobking_right.png";
+// potion.src = "static/images/potion.png";
+
+
+
+
+
+
+gobking_left.src = "http://i.imgur.com/alUMAKk.png";
+gobking_right.src = "http://i.imgur.com/9Bwvh9H.png";
+potion.src = "http://i.imgur.com/zLS5Tqf.png";
 
 coin.src = "https://i.imgur.com/wOxaRHq.png";
 ruby.src = "https://i.imgur.com/bAsFNAZ.png"

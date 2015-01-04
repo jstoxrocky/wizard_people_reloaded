@@ -11,9 +11,6 @@ from flask.ext.socketio import SocketIO, emit
 import urllib, json
 from random import randint
 
-from datetime import timedelta
-from flask import make_response, request, current_app
-from functools import update_wrapper
 
 #start me up!
 app = Flask(__name__)
@@ -502,9 +499,35 @@ def gameLoopFunc(d):
 			if checkCollisionWithBaddie(uidDict[uid], baddie, i, uid):
 				baddie['lives'] -= 1
 				baddie['r'] = 50
+
+
+				# zx = baddie['x'] - uidDict[uid]['x']
+				# zy = baddie['y'] - uidDict[uid]['y']
+				# uidDict[uid]['x'] -= zx
+				# uidDict[uid]['y'] -= zy
+				# uidDict[uid] = collisionWithCanvasBounds(uidDict[uid])
+
+				#control for collisions with rectangles
+				uidDict[uid] = collisionWithRect(uidDict[uid])
+
 				if baddie['lives'] <= 0:
 					bonesList.append({'x':baddie['x'],'y':baddie['y'], 'h':baddie['h']})
 					baddieList.pop(i)
+
+
+				
+				# sign = 0
+				# while checkCollisionWithBaddie(uidDict[uid], baddie, i, uid):
+				# 	if uidDict[uid]['dx'] != 0:
+				# 		sign = uidDict[uid]['dx']/abs(uidDict[uid]['dx'])
+				# 		uidDict[uid]['x'] -= sign
+
+				# sign = 0
+				# while checkCollisionWithBaddie(uidDict[uid], baddie, i, uid):
+				# 	if uidDict[uid]['dy'] != 0:
+				# 		sign = uidDict[uid]['dy']/abs(uidDict[uid]['dy'])
+				# 		uidDict[uid]['y'] -= sign
+
 
 				getHurt(uidDict[uid], uid)
 
@@ -782,6 +805,7 @@ def collisionWithBaddie(specificObjectDict, baddie, i, uid):
 		baddieList.pop(i)
 		bonesList.append({'x':baddie['x'],'y':baddie['y']})
 		# specificObjectDict = getHurt(specificObjectDict, uid)
+
 		getHurt(specificObjectDict, uid)
 
 	return specificObjectDict
