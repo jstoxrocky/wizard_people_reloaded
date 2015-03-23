@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*- 
 
-from __future__ import print_function
-
 #needed for debug mode to work!
 from gevent import monkey
 monkey.patch_all()
@@ -15,7 +13,7 @@ from random import randint
 #get game classes
 from threading import Thread
 from Queue import Queue
-from game import Game, Player, Badguy, Room
+from game import Player, Badguy, Room
 
 
 #start me up!
@@ -33,14 +31,18 @@ def index():
     return render_template('main.html')
 
 
-@socketio.on('connect', namespace='/test')
-def connectFunc():
+# @socketio.on('connect', namespace='/test')
+# def connectFunc():
+#     msg = "New Connection."
+#     emit('connection_response', {"msg":msg}, broadcast=True,) 
+
+@socketio.on('connect')
+def on_connect():
     msg = "New Connection."
     emit('connection_response', {"msg":msg}, broadcast=True,) 
 
 
-
-@socketio.on('create_canvas_request', namespace='/test')
+@socketio.on('create_canvas_request')
 def createCanvasFunc(d):
     msg = "Drawing canvas."
 
@@ -48,29 +50,81 @@ def createCanvasFunc(d):
 
     current_app.badguy_list = []
     current_app.badguy_list.append(Badguy('goblin'))
-    current_app.badguy_list.append(Badguy('rat'))
+    # current_app.badguy_list.append(Badguy('rat'))
 
     emit('create_canvas_response', {"msg":msg}, broadcast=True,) 
 
 
 
 
-@socketio.on('get_game_state_request', namespace='/test')
-def createCanvasFunc(d):
-    msg = "Updating canvas."
+# @socketio.on('get_game_state_request', namespace='/test')
+# def createCanvasFunc(d):
+#     msg = "Updating canvas."
 
-    badguy_json = []
-    for badguy in current_app.badguy_list:
-        badguy_json.append(badguy.to_json())
+#     badguy_json = []
+#     for badguy in current_app.badguy_list:
+#         badguy_json.append(badguy.to_json())
 
-    emit('get_game_state_response', {"msg":msg, "badguy_json":badguy_json}, broadcast=True,) 
+#     queue.put_nowait(badguy_json)
+
+#     emit('get_game_state_response', {"msg":msg, "badguy_json":badguy_json}, broadcast=True,) 
 
 
-@app.route("/message/<message>")
-def send_message(message):
-    print("--> sending message: {}".format(message))
-    queue.put_nowait(message)
-    return "ok"
+# @app.route("/message/<message>")
+# def send_message(message):
+#     print("--> sending message: {}".format(message))
+
+#     queue.put_nowait(message)
+#     return "ok"
+
+from Queue import Empty
+from time import sleep
+
+class Game(object):
+    def __init__(self, queue):
+        self.queue = queue
+
+    def run(self):
+        while True:
+            message = None
+
+            try:
+                message = self.queue.get_nowait()
+            except Empty:
+                print("--- sleeping")
+                sleep(0.1)
+
+            if message == "stop":
+                print("!!! stopped!")
+                break
+
+            if message:
+                print("<-- got message: {}".format(message))
+
+
+            update_badguys_position()
+
+            
+
+def update_badguys_position():
+
+    msg = "Updating badguys."
+
+    with app.app_context():
+        badguy_json = []
+        for badguy in current_app.badguy_list:
+            badguy.move(dy=0,dx=badguy.speed)
+            badguy_json.append(badguy.to_json())
+
+
+
+    socketio.emit('get_game_state_response', {"msg":msg,"badguy_json":badguy_json}) 
+
+
+
+
+
+
 
 @app.before_first_request
 def initialize_game():

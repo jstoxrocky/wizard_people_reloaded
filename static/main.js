@@ -4,15 +4,10 @@ var goblin_left = new Image();
 var goblin_right = new Image();
 goblin_left.src = "https://i.imgur.com/gB7lEU5.png";
 goblin_right.src = "https://i.imgur.com/WYwdG3Z.png";
-
-
-function test_flow(badguy_json) {
-
-    update_canvas(badguy_json)
-
-}
-
-
+var rat_left = new Image();
+var rat_right = new Image();
+rat_left.src = "https://i.imgur.com/GqhYJ7I.png";
+rat_right.src = "https://i.imgur.com/rg33icE.png";
 
 
 
@@ -27,16 +22,19 @@ function create_canvas() {
     canvas.width = document.body.clientWidth;
     canvas.height = document.body.clientHeight;
     ctx = canvas.getContext("2d");
+}
 
+function clear_canvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#659D32";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
 }
+
 
 
 function update_canvas(badguy_json) {
 
+    clear_canvas()
     draw_badguys(badguy_json)
 
 }
@@ -46,14 +44,15 @@ function draw_badguys(badguy_json){
 
 
     for (i = 0; i < badguy_json.length; i++) { 
-        
-            console.log(badguy_json[i])
 
             if (badguy_json[i]['type'] == 'goblin'){
                 img_right = goblin_right;
                 img_left = goblin_left;
             }
-
+            else if (badguy_json[i]['type'] == 'rat'){
+                img_right = rat_right;
+                img_left = rat_left;
+            }
 
             if (badguy_json[i]['dx']>=0){
                 image = img_right;
@@ -103,7 +102,14 @@ function draw_badguys(badguy_json){
 
 
 //connection 
-var socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
+// var socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
+
+
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+    socket.on('connect', function() {
+        socket.emit('connect');
+    });
+
 
 
 //connection
@@ -121,16 +127,17 @@ socket.on('create_canvas_response', function(d) {
     console.log(d.msg);
     create_canvas()
 
-    socket.emit('get_game_state_request', {});
-
 });
+
+
 
 
 //update canvas
 socket.on('get_game_state_response', function(d) {
 
     console.log(d.msg);
-    test_flow(d.badguy_json)
+
+    update_canvas(d.badguy_json)
 
 });
 
