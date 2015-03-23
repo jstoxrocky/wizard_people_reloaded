@@ -1,2 +1,31 @@
-*.png
-*.pyc
+*.py[cod]
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+sdist
+develop-eggs
+tmp
+
+# Installer logs
+pip-log.txt
+
+# Other
+*.iml
+.idea
+*.swp
+doc/_build/
+.vim
+
+# Local sandbox/playground
+/sandbox
+
+.DS_Store
+
+# Coverage output
+.coverage
+htmlcov
