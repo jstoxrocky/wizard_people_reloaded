@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*- 
 
+from __future__ import print_function
 
 #needed for debug mode to work!
 from gevent import monkey
@@ -12,7 +13,9 @@ import urllib, json
 from random import randint
 
 #get game classes
-from game import Player, Badguy, Room
+from threading import Thread
+from Queue import Queue
+from game import Game, Player, Badguy, Room
 
 
 #start me up!
@@ -20,6 +23,8 @@ app = Flask(__name__)
 app.debug = True
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
+
+queue = Queue()
 
 
 #FLASK
@@ -61,6 +66,19 @@ def createCanvasFunc(d):
     emit('get_game_state_response', {"msg":msg, "badguy_json":badguy_json}, broadcast=True,) 
 
 
+@app.route("/message/<message>")
+def send_message(message):
+    print("--> sending message: {}".format(message))
+    queue.put_nowait(message)
+    return "ok"
+
+@app.before_first_request
+def initialize_game():
+    game = Game(queue)
+
+    thread = Thread(target=game.run)
+    thread.start()
+    current_app.game = game
 
 if __name__ == '__main__':
     socketio.run(app, host= '0.0.0.0', port=6020)
