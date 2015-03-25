@@ -1,22 +1,20 @@
 # -*- coding=utf -*-
 
-from __future__ import print_function
+# from __future__ import print_function
 
-from random import randint
+from random import uniform
 from Queue import Empty
 from time import sleep
 
-TILE_WIDTH = 500
-TILE_HEIGHT = 500
-MAP_WIDTH = 15
-MAP_HEIGHT = 10
+MAP_WIDTH = 30
+MAP_HEIGHT = 25
 
 class Game(object):
     def __init__(self, queue, broadcast_state_function):
         self.queue = queue
 
-        self.world_width = MAP_WIDTH*TILE_WIDTH
-        self.world_height = MAP_HEIGHT*TILE_HEIGHT
+        self.world_width = MAP_WIDTH
+        self.world_height = MAP_HEIGHT
 
         self.room = Room()
                 
@@ -33,7 +31,7 @@ class Game(object):
 
             try:
                 
-                message = self.queue.get(timeout=0.02)
+                message = self.queue.get(timeout=0.005)
                 
 
             except Empty:
@@ -49,7 +47,8 @@ class Game(object):
                 break
 
             if message:
-                print("<-- got message: {}".format(message))
+                # print("<-- got message: {}".format(message))
+                pass
 
 
 
@@ -57,11 +56,16 @@ class Game(object):
                 self.issue_commands_to_players(message['dy'],message['dx'])
                 self.move_characters(self.room.player_list)
 
+            if message.get('type') == 'attack':
+                self.create_attacks(message['attack_x_direction'],message['attack_y_direction'])
+
+                print(message)
+
 
             if game_counter % 5 == 0:
 
                 self.run_game_step()
-                # game_counter = 0
+
 
 
 
@@ -83,6 +87,10 @@ class Game(object):
         self.broadcast_state({"msg":msg, "badguy_json":badguy_json, "rect_json":rect_json, "player_json":player_json}) 
 
 
+    def create_attacks(self, attack_x_direction, attack_y_direction):
+        for player in self.room.player_list:
+            player.attack_orb.attack_x_direction = attack_x_direction
+            player.attack_orb.attack_y_direction = attack_y_direction
 
 
 
@@ -161,12 +169,20 @@ class Game(object):
 
 
 
+class AttackOrb(object):
 
+    def __init__(self):
+
+        self.attack_x_direction = 0
+        self.attack_y_direction = 0
+        self.attack_width = 0.3
 
 
 
 
 class Player(object):
+
+
     def __init__(self, x, y):
 
         self.health = 3
@@ -177,9 +193,12 @@ class Player(object):
         self.dy = 0
         self.y_direction = 1
         self.x_direction = 1
-        self.width = TILE_WIDTH/2.0
-        self.height = TILE_HEIGHT/2.0 
-        self.speed = 10
+        self.width = 0.8 #half of tile
+        self.height = 0.8
+        self.speed = 0.07 #of a tile
+
+        self.attack_orb = AttackOrb()
+
 
     def move(self):
 
@@ -202,9 +221,17 @@ class Player(object):
 
     def to_json(self):
 
-        return {"health":self.health, "x":self.x, "y":self.y, "points":self.points, "dx":self.dx, "dy":self.dy, "width":self.width, "height":self.height}
-
-
+        return {"attack_width":self.attack_orb.attack_width,
+                "attack_y_direction":self.attack_orb.attack_y_direction,
+                "attack_x_direction":self.attack_orb.attack_x_direction, 
+                "health":self.health, 
+                "x":self.x, 
+                "y":self.y, 
+                "points":self.points, 
+                "dx":self.dx, 
+                "dy":self.dy, 
+                "width":self.width, 
+                "height":self.height}
 
 
 class Badguy(object):
@@ -221,26 +248,26 @@ class Badguy(object):
         self.x_direction = 1
         
         if type=='goblin':
-            self.speed = 8
-            self.width = TILE_WIDTH/2.0
-            self.height = TILE_HEIGHT/2.0 
+            self.speed = 0.02
+            self.width = 0.8
+            self.height = 0.8 
             self.action = self.patrol
 
         elif type=='rat':
-            self.speed = 4
-            self.width = TILE_WIDTH/2.0
-            self.height = TILE_HEIGHT/3.5 
+            self.speed = 0.01
+            self.width = 0.8
+            self.height = 0.5 
             self.action = self.explore
 
     def patrol(self):
 
-        self.dy=randint(-2,2)
+        self.dy=uniform(-0.05,0.05)
         self.dx=self.x_direction*self.speed
 
     def explore(self):
 
-        self.dy=self.y_direction*(self.speed + randint(-5,5))
-        self.dx=self.x_direction*(self.speed*3 + randint(0,5))
+        self.dy=self.y_direction*(self.speed + uniform(-0.05,0.05))
+        self.dx=self.x_direction*(self.speed*3 + uniform(0,0.05))
 
 
     def move(self):
@@ -269,8 +296,8 @@ class Rect(object):
 
     def __init__(self, x, y):
 
-        self.width = TILE_WIDTH
-        self.height = TILE_HEIGHT
+        self.width = 1
+        self.height = 1
         self.x = x
         self.y = y
         self.color = "#855E42"
@@ -283,21 +310,38 @@ class Rect(object):
 class Room(object):
 
     def __init__(self):
-        #       000000000011111
-        #       012345678901234
-        room = "               " \
-               "  xxx          " \
-               "  x x   g      " \
-               "  xxx          " \
-               "        p       " \
-               "  xxxxxxx      " \
-               "  x            " \
-               "  x     x      " \
-               "  xxxxxxx      " \
-               "               "
+        #       000000000011111111112222222222
+        #       012345678901234567891234567890
+        room = "                              " \
+               "  xxx                         " \
+               "  x x   g                     " \
+               "  xxx                         " \
+               "        p           x         " \
+               "  xxxxxxx           x         " \
+               "  x  rr             x         " \
+               "  x rrr   x         x         " \
+               "  xxxxxxx           x         " \
+               "                              " \
+               "                              " \
+               "  xxx                         " \
+               "  x x   g                     " \
+               "  xxx                         " \
+               "                              " \
+               "                              " \
+               "                              " \
+               "                              " \
+               "                              " \
+               "                              " \
+               "         xxxxxxxxxxxxxxxxxxxx " \
+               "                              " \
+               "                              " \
+               "                              " \
+               "                              " \
 
-        self.width = TILE_WIDTH * MAP_WIDTH
-        self.height = TILE_HEIGHT * MAP_HEIGHT
+
+
+        self.width = MAP_WIDTH
+        self.height = MAP_HEIGHT
 
         self.build_room(room)
         
@@ -314,14 +358,14 @@ class Room(object):
 
                 if item == 'x':
                     # TODO: rename to Wall
-                    rect = Rect(x * TILE_WIDTH, y * TILE_HEIGHT)
+                    rect = Rect(x, y)
                     self.rect_list.append(rect)
                 elif item == 'r':
-                    self.badguy_list.append(Badguy('rat', x*TILE_WIDTH, y*TILE_HEIGHT))
+                    self.badguy_list.append(Badguy('rat', x, y))
                 elif item == 'g':
-                    self.badguy_list.append(Badguy('goblin', x*TILE_WIDTH, y*TILE_HEIGHT))
+                    self.badguy_list.append(Badguy('goblin', x, y))
                 elif item == 'p':
-                    self.player_list.append(Player(x*TILE_WIDTH, y*TILE_HEIGHT))
+                    self.player_list.append(Player(x, y))
 
 
 

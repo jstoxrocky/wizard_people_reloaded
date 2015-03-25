@@ -48,22 +48,7 @@ listenForKeypressLoop();
 
 function listenForKeypressLoop() {
     
-        //n 110
-        // if(keyState[78]) {
-        //     socket.emit('refreshGlobalsRequest', {});
-        // }
 
-        //l 76 space 32
-        // else if(keyState[32]) {
-
-        //     if (!mult) {
-        //         mult = true;
-        //         setTimeout(function() {
-        //             mult = false;
-        //         }, 500)
-        //         socket.emit('attackRequest', {});
-        //     }
-        // }
             
         if (keyState[87] || keyState[65] || keyState[83] || keyState[68]) {
 
@@ -87,16 +72,34 @@ function listenForKeypressLoop() {
                     x += 1;
                 }
 
-                //speed up uni-diectional movement 
-                //since you travel farther in diagnola
-                // if (x == 0){
-                //     y = y*1.35
-                // }
-                // if (y == 0){
-                //     x = x*1.35
-                // }
-
                 socket.emit('keypress_request', {"type":"player_movement", "dx": x, "dy": y});
+
+        }
+
+
+        if (keyState[37] || keyState[38] || keyState[39] || keyState[40]) {
+
+                x = 0;
+                y = 0;
+
+                //w 119
+                if(keyState[38]) {
+                    y -= 1;
+                }
+                //a 97
+                if(keyState[37]) {
+                    x -= 1;
+                }
+                // s 115
+                if(keyState[40]){
+                    y += 1;
+                }
+                // d 100
+                if(keyState[39]) {
+                    x += 1;
+                }
+
+                socket.emit('keypress_request', {"type":"attack", "attack_x_direction": x, "attack_y_direction": y});
 
         }
 
