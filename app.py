@@ -36,7 +36,21 @@ def index():
 @socketio.on('connect')
 def on_connect():
     msg = "New Connection."
-    emit('connection_response', {"msg":msg}, broadcast=True,) 
+
+    with app.app_context():
+        if not current_app.game:
+            return
+            
+        emit('connection_response', {"msg":msg, "world_width":current_app.game.world_width, "world_height":current_app.game.world_height}, broadcast=True,) 
+
+
+
+
+@socketio.on('keypress_request')
+def keypress_func(d):
+    queue.put_nowait(d)
+    emit('key_press_response', broadcast=True,) 
+
 
 # @app.route("/message/<message>")
 # def send_message(message):
@@ -64,4 +78,9 @@ def initialize_game():
 
 
 if __name__ == '__main__':
+
+
+    with app.app_context():
+        current_app.game = None
+    
     socketio.run(app, host= '0.0.0.0', port=6020)

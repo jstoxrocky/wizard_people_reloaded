@@ -1,6 +1,3 @@
-$(document).ready(function(){
-
-
 
 
 var goblin_left = new Image();
@@ -14,23 +11,28 @@ var rat_right = new Image();
 rat_left.src = "https://i.imgur.com/GqhYJ7I.png";
 rat_right.src = "https://i.imgur.com/rg33icE.png";
 
+var wizard_blu_left = new Image();
+var wizard_blu_right = new Image();
+wizard_blu_left.src = "https://i.imgur.com/k2ob4Wl.png";
+wizard_blu_right.src = "https://i.imgur.com/HLY8Ipk.png";
+
+
+
 
 
 var canvas
 var ctx
 var width_ratio
 var height_ratio
-function create_canvas() {
+function create_canvas(world_width, world_height) {
 
     canvas = document.getElementById("canvas");
     canvas.width = document.body.clientWidth;
     canvas.height = document.body.clientHeight;
     ctx = canvas.getContext("2d");
-    grid_width = 1500
-    grid_height = 1000
 
-    width_ratio = canvas.width / grid_width
-    height_ratio = canvas.height / grid_height
+    width_ratio = canvas.width / world_width
+    height_ratio = canvas.height / world_height
 
 }
 
@@ -43,11 +45,12 @@ function clear_canvas() {
 
 
 
-function update_canvas(badguy_json, rect_json) {
+function update_canvas(badguy_json, rect_json, player_json) {
 
     clear_canvas()
     draw_rects(rect_json)
     draw_badguys(badguy_json)
+    draw_players(player_json)
 
 }
 
@@ -69,49 +72,56 @@ function draw_rects(rect_json){
 }
 
 
+function draw_character(character_json, image){
+
+        character_width = width_ratio*character_json[i].width
+        character_height = height_ratio*character_json[i].height
+        character_x = width_ratio*character_json[i].x
+        character_y = height_ratio*character_json[i].y
+
+        cx = character_x + character_width/2
+        cy = character_y + character_height/2
+
+        ctx.fillStyle = "#CC1100";
+        ctx.beginPath();
+        ctx.arc(
+            cx,
+            cy,
+            0,
+            0, 
+            Math.PI * 2
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.drawImage(image, character_x, character_y, character_width, character_height);
+
+}
+
+
+
 function draw_badguys(badguy_json){
 
 
     for (i = 0; i < badguy_json.length; i++) { 
 
-            if (badguy_json[i]['type'] == 'goblin'){
-                img_right = goblin_right;
-                img_left = goblin_left;
-            }
-            else if (badguy_json[i]['type'] == 'rat'){
-                img_right = rat_right;
-                img_left = rat_left;
-            }
+        if (badguy_json[i]['type'] == 'goblin'){
+            img_right = goblin_right;
+            img_left = goblin_left;
+        }
+        else if (badguy_json[i]['type'] == 'rat'){
+            img_right = rat_right;
+            img_left = rat_left;
+        }
 
-            if (badguy_json[i]['dx']>=0){
-                image = img_right;
-            }
-            else{
-                image = img_left;
-            }
+        if (badguy_json[i]['dx']>=0){
+            image = img_right;
+        }
+        else{
+            image = img_left;
+        }
 
-            badguy_width = width_ratio*badguy_json[i].width
-            badguy_height = height_ratio*badguy_json[i].height
-            badguy_x = width_ratio*badguy_json[i].x
-            badguy_y = height_ratio*badguy_json[i].y
-
-            cx = badguy_x + badguy_width/2
-            cy = badguy_y + badguy_height/2
-
-            ctx.fillStyle = "#CC1100";
-            ctx.beginPath();
-            ctx.arc(
-                cx,
-                cy,
-                0,
-                0, 
-                Math.PI * 2
-            );
-            ctx.closePath();
-            ctx.fill();
-
-
-        ctx.drawImage(image, badguy_x, badguy_y, badguy_width, badguy_height);
+        draw_character(badguy_json, image)
 
     }
 }
@@ -119,51 +129,36 @@ function draw_badguys(badguy_json){
 
 
 
+function draw_players(player_json){
+
+    for (i = 0; i < player_json.length; i++) { 
+
+        if (player_json[i]['dx']>=0){
+            image = wizard_blu_right;
+        }
+        else{
+            image = wizard_blu_left;
+        }
+
+        draw_character(player_json, image)
+
+    }
+
+}
 
 
 
 
+//keypresses
+var keyState = {};
+var mult;
 
-
-
-
-//connection
-var socket = io.connect('http://' + document.domain + ':' + location.port);
-socket.on('connect', function() {
-    socket.emit('connect');
-});
-
-
-
-//connection
-// socket.on('connection_response', function(d) {
-
-//     console.log(d.msg);
-//     socket.emit('create_canvas_request', {});
-
-// });
-
-
-//create canvas
-socket.on('connection_response', function(d) {
-
-    console.log(d.msg);
-    console.log("Creating canvas.")
-    create_canvas()
-
-});
-
-
-
-
-//update canvas
-socket.on('get_game_state_response', function(d) {
-
-    console.log(d.msg);
-
-    update_canvas(d.badguy_json, d.rect_json)
-
-});
+window.addEventListener('keydown',function(e){
+    keyState[e.keyCode || e.which] = true;
+},true);    
+window.addEventListener('keyup',function(e){
+    keyState[e.keyCode || e.which] = false;
+},true);
 
 
 
@@ -175,7 +170,7 @@ socket.on('get_game_state_response', function(d) {
 
 
 
-});
+
 
 
 

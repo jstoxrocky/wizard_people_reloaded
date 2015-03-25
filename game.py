@@ -1,26 +1,48 @@
 # -*- coding=utf -*-
+
+from __future__ import print_function
+
 from random import randint
 from Queue import Empty
 from time import sleep
 
+TILE_WIDTH = 500
+TILE_HEIGHT = 500
+MAP_WIDTH = 15
+MAP_HEIGHT = 10
 
 class Game(object):
     def __init__(self, queue, broadcast_state_function):
         self.queue = queue
+
+        self.world_width = MAP_WIDTH*TILE_WIDTH
+        self.world_height = MAP_HEIGHT*TILE_HEIGHT
 
         self.room = Room()
                 
         self.broadcast_state = broadcast_state_function
 
     def run(self):
+
+        game_counter = 0
         while True:
+
+
+            game_counter += 1
             message = None
 
             try:
-                message = self.queue.get_nowait()
+                
+                message = self.queue.get(timeout=0.02)
+                
+
             except Empty:
-                # print("--- sleeping")
-                sleep(0.1)
+                
+                message = {}
+
+                # print("SLEEPING after {} messages".format(count))
+                # count = 0
+                # sleep(0.1)
 
             if message == "stop":
                 print("!!! stopped!")
@@ -29,25 +51,41 @@ class Game(object):
             if message:
                 print("<-- got message: {}".format(message))
 
-            msg = "Updating world."
-            self.update_badguys_position()
-            self.correct_for_collisions_with_canvas_bounds()
-
-            self.check_for_collison_with_rectangle()
-
-            badguy_json = self.all_list_to_json(self.room.badguy_list)
-            rect_json = self.all_list_to_json(self.room.rect_list)
 
 
+            if message.get('type') == 'player_movement':
+                self.issue_commands_to_players(message['dy'],message['dx'])
+                self.move_characters(self.room.player_list)
 
-            self.broadcast_state({"msg":msg, "badguy_json":badguy_json, "rect_json":rect_json}) 
 
-            
+            if game_counter % 5 == 0:
 
-    def update_badguys_position(self):
-        
-        for badguy in self.room.badguy_list:
-            badguy.action()
+                self.run_game_step()
+                # game_counter = 0
+
+
+
+
+
+    def run_game_step(self):
+
+        msg = "Updating world."
+
+        self.make_badguy_decisions()
+        self.correct_badguy_decisions_for_collisions_with_canvas_bounds()
+        self.correct_badguy_decisions_for_collisons_with_rectangles()
+        self.move_characters(self.room.badguy_list)
+
+        badguy_json = self.all_list_to_json(self.room.badguy_list)
+        rect_json = self.all_list_to_json(self.room.rect_list)
+        player_json  = self.all_list_to_json(self.room.player_list)
+
+        self.broadcast_state({"msg":msg, "badguy_json":badguy_json, "rect_json":rect_json, "player_json":player_json}) 
+
+
+
+
+
 
 
     def all_list_to_json(self, item_list):
@@ -58,53 +96,63 @@ class Game(object):
 
         return list_of_json
 
-    def correct_for_collisions_with_canvas_bounds(self):
+    def issue_commands_to_players(self, dy, dx):
+        for player in self.room.player_list:
+            player.dx = dx*player.speed
+            player.dy = dy*player.speed
+
+
+    def make_badguy_decisions(self):
+        
+        for badguy in self.room.badguy_list:
+            badguy.action()
+
+
+    def correct_badguy_decisions_for_collisions_with_canvas_bounds(self):
 
         for badguy in self.room.badguy_list:
-            if badguy.x <= 0 or badguy.x + badguy.width >= self.room.width:
-
-                # badguy.move(dy=badguy.dy,dx=-badguy.x_direction*badguy.speed)
-                badguy.move(dy=badguy.dy,dx=-badguy.dx)
-
-        for badguy in self.room.badguy_list:
-            if badguy.y <= 0 or badguy.y + badguy.height >= self.room.height:
-
-                # badguy.move(dy=-badguy.y_direction*badguy.speed,dx=badguy.dx)
-                badguy.move(dy=-badguy.dy,dx=badguy.dx)
-
-
-
-
-    def rectangle_on_rectangle_collision(self, rect1, rect2):
-
-        return rect1.x < rect2.x + rect2.width and \
-           rect1.x + rect1.width > rect2.x and \
-           rect1.y < rect2.y + rect2.height and \
-           rect1.height + rect1.y > rect2.y
-
-
-    def check_for_collison_with_rectangle(self):
+            if badguy.x + badguy.dx <= 0 or badguy.x + badguy.dx + badguy.width >= self.room.width:
+                badguy.dy = badguy.dy
+                badguy.dx = -badguy.dx
 
         for badguy in self.room.badguy_list:
-            for rect in self.room.rect_list:
-                if self.rectangle_on_rectangle_collision(badguy,rect):
-
-                    badguy.x -= badguy.dx
-                    if not self.rectangle_on_rectangle_collision(badguy,rect):
-                        badguy.x += badguy.dx
-                        badguy.move(dy=badguy.y_direction,dx=-badguy.dx)
-
-                    else:
-
-                        badguy.x += badguy.dx
-                        badguy.move(dy=-badguy.dy,dx=badguy.x_direction)
+            if badguy.y + badguy.dy <= 0 or badguy.y + badguy.dy + badguy.height >= self.room.height:
+                badguy.dy = -badguy.dy
+                badguy.dx = badguy.dx
 
 
+    def rectangle_on_rectangle_collision(self, character, rect):
+
+        return character.x + character.dx < rect.x + rect.width and \
+           character.x + + character.dx + character.width > rect.x and \
+           character.y + character.dy < rect.y + rect.height and \
+           character.height + character.y + character.dy > rect.y
+
+
+    def correct_badguy_decisions_for_collisons_with_rectangles(self):
+        
+        for rect in self.room.rect_list:
+            for badguy in self.room.badguy_list:
+
+                nine_oclock = badguy.x + badguy.dx < rect.x and badguy.x + badguy.dx + badguy.width > rect.x
+                three_oclock = badguy.x + badguy.dx < rect.x + rect.width and badguy.x + badguy.dx + badguy.width > rect.x + rect.width
+                twelve_oclock = badguy.y + badguy.dy < rect.y and badguy.y + badguy.dy + badguy.height > rect.y
+                six_oclock = badguy.y + badguy.dy < rect.y + rect.height and badguy.y + badguy.dy + badguy.height > rect.y + rect.height
+
+
+                if self.rectangle_on_rectangle_collision(badguy, rect):
+
+                    if nine_oclock or three_oclock:
+                        badguy.dx = -badguy.dx
+                    if twelve_oclock or six_oclock:
+                        badguy.dy = -badguy.dy
 
 
 
 
-
+    def move_characters(self, character_list):
+        for character in character_list:
+            character.move()
 
 
 
@@ -119,17 +167,34 @@ class Game(object):
 
 
 class Player(object):
-    def __init__(self):
+    def __init__(self, x, y):
 
         self.health = 3
-        self.x = 0
-        self.y = 0
+        self.x = x
+        self.y = y
         self.points = 0
+        self.dx = 0
+        self.dy = 0
+        self.y_direction = 1
+        self.x_direction = 1
+        self.width = TILE_WIDTH/2.0
+        self.height = TILE_HEIGHT/2.0 
+        self.speed = 10
 
-    def move(self,dy,dx):
+    def move(self):
 
-        self.x += dx
-        self.y += dy
+        self.x += self.dx
+        self.y += self.dy
+
+        if self.dx >= 0:
+            self.x_direction = 1
+        else:
+            self.x_direction = -1
+
+        if self.dy >= 0:
+            self.y_direction = 1
+        else:
+            self.y_direction = -1
 
     def attack(self):
         #do some attacking
@@ -137,7 +202,7 @@ class Player(object):
 
     def to_json(self):
 
-        return {"health":self.health, "x":self.x, "y":self.y, "points":self.points}
+        return {"health":self.health, "x":self.x, "y":self.y, "points":self.points, "dx":self.dx, "dy":self.dy, "width":self.width, "height":self.height}
 
 
 
@@ -157,31 +222,31 @@ class Badguy(object):
         
         if type=='goblin':
             self.speed = 8
-            self.width = 50
-            self.height = 50
+            self.width = TILE_WIDTH/2.0
+            self.height = TILE_HEIGHT/2.0 
             self.action = self.patrol
 
         elif type=='rat':
             self.speed = 4
-            self.width = 50
-            self.height = 20
+            self.width = TILE_WIDTH/2.0
+            self.height = TILE_HEIGHT/3.5 
             self.action = self.explore
 
     def patrol(self):
 
-        self.move(dy=randint(-2,2),dx=self.x_direction*self.speed)
+        self.dy=randint(-2,2)
+        self.dx=self.x_direction*self.speed
 
     def explore(self):
 
-        self.move(dy=self.y_direction*(self.speed + randint(0,5)),dx=self.x_direction*(self.speed*3 + randint(0,5)))
+        self.dy=self.y_direction*(self.speed + randint(-5,5))
+        self.dx=self.x_direction*(self.speed*3 + randint(0,5))
 
 
-    def move(self,dy,dx):
+    def move(self):
 
-        self.dx = dx
-        self.dy = dy
-        self.x += dx
-        self.y += dy
+        self.x += self.dx
+        self.y += self.dy
 
         if self.dx >= 0:
             self.x_direction = 1
@@ -198,10 +263,6 @@ class Badguy(object):
         return {"health":self.health, "x":self.x, "y":self.y, "type":self.type, "dx":self.dx, "dy":self.dy, "width":self.width, "height":self.height}
 
 
-TILE_WIDTH = 100
-TILE_HEIGHT = 100
-MAP_WIDTH = 15
-MAP_HEIGHT = 10
 
 
 class Rect(object):
@@ -225,15 +286,15 @@ class Room(object):
         #       000000000011111
         #       012345678901234
         room = "               " \
-               " x  x        xx" \
-               " x  x g   xxxxx" \
-               " xxxx      xxxx" \
-               "    xxxx       " \
-               " r       xxxx  " \
-               " xxxx   xxxr   " \
-               " x  x g xxx    " \
-               " x      xxx    " \
-               "    x     x    "
+               "  xxx          " \
+               "  x x   g      " \
+               "  xxx          " \
+               "        p       " \
+               "  xxxxxxx      " \
+               "  x            " \
+               "  x     x      " \
+               "  xxxxxxx      " \
+               "               "
 
         self.width = TILE_WIDTH * MAP_WIDTH
         self.height = TILE_HEIGHT * MAP_HEIGHT
@@ -244,6 +305,8 @@ class Room(object):
 
         self.rect_list = []
         self.badguy_list = []
+        self.player_list = []
+
         for x in range(0, MAP_WIDTH):
             for y in range(0, MAP_HEIGHT):
                 item = room_map[y*MAP_WIDTH + x]
@@ -257,7 +320,8 @@ class Room(object):
                     self.badguy_list.append(Badguy('rat', x*TILE_WIDTH, y*TILE_HEIGHT))
                 elif item == 'g':
                     self.badguy_list.append(Badguy('goblin', x*TILE_WIDTH, y*TILE_HEIGHT))
-
+                elif item == 'p':
+                    self.player_list.append(Player(x*TILE_WIDTH, y*TILE_HEIGHT))
 
 
 
