@@ -2,6 +2,14 @@
 $(document).ready(function(){
 
 
+$("body").append("<div class='startText' id='title'>WIZARD PEOPLE</div>")
+$("body").append("<div class='startText' id='instructions'>CLICK TO SELECT A WIZARD</div>")
+$("body").append("<div class='startText' id='instructions2'>WAIT FOR OTHER PLAYERS</div>")
+$("body").append("<div class='startText' id='instructions3'>PRESS ENTER TO BEGIN</div>")
+
+$("body").append("<div class='startText' id='instructions4'>A,S,W,D TO MOVE</div>")
+$("body").append("<div class='startText' id='instructions5'>ARROW KEYS TO CAST SPELLS</div>")
+
 //connection
 var socket = io.connect('http://' + document.domain + ':' + location.port);
 socket.on('connect', function() {
@@ -15,11 +23,20 @@ socket.on('connect', function() {
 socket.on('connection_response', function(d) {
 
     console.log(d.msg);
-    console.log("Creating canvas.")
-    create_canvas(d.world_width, d.world_height)
-    // drawstartScreen();
-    // updatestartScreen();
-    // clicker();
+    initialize_canvas()
+    drawstartScreen();
+    updatestartScreen(d.player_chosen_colors_dict.red, d.player_chosen_colors_dict.blu, d.player_chosen_colors_dict.gre, d.player_chosen_colors_dict.yel)
+    clicker();
+
+});
+
+
+//create canvas
+socket.on('start_game_response', function(d) {
+
+    console.log(d.msg);
+    create_map(d.world_width, d.world_height)
+
 
 });
 
@@ -29,18 +46,18 @@ socket.on('connection_response', function(d) {
 //update canvas
 socket.on('get_game_state_response', function(d) {
 
-    // console.log(d.msg);
     update_canvas(d.badguy_json, d.rect_json, d.player_json, d.orb_json)
 
 });
 
 
-//key press response
-// socket.on('key_press_response', function(d) {
+//player choose response
+socket.on('player_choose_response', function(d) {
 
-//     // console.log(d.msg);
+    console.log(d.msg);
+    updatestartScreen(d.player_chosen_colors_dict.red, d.player_chosen_colors_dict.blu, d.player_chosen_colors_dict.gre, d.player_chosen_colors_dict.yel)
 
-// });
+});
 
 
 listenForKeypressLoop();
@@ -112,11 +129,58 @@ $(document).keydown(function(e) {
 
     }
 
+    if(e.which == 13) {
+        socket.emit('start_game_request',{});
+    }
     
+    if(e.which == 82) {
+        socket.emit('reset_game_request',{});
+    }
+
 
 });
 
 
+
+
+
+function clicker(){
+
+    $("body").click(function(event){  
+
+        $( ".startText" ).fadeOut( "slow", function() {
+        // Animation complete.
+        });
+
+
+
+        x = event.pageX;
+        y = event.pageY;
+
+        if (x >= canvas.width/2){
+            if (y >= canvas.height/2) {
+                col = "gre"
+            }
+            else {
+                col = "blu"
+            }
+        }
+        else {
+            if (y >= canvas.height/2) {
+                col = "yel"
+            }
+            else {
+                col = "red"
+            }
+        }
+
+        // if (uidDict == undefined){
+        socket.emit('player_choose_request', {"col":col});
+    // }
+    
+    });
+
+}
 
 
 

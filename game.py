@@ -31,6 +31,10 @@ class Game(object):
             except Empty:
                 message = {}
 
+            if message.get('type') == "STOP":
+
+                break
+
             if message.get('type') == 'player_movement':
 
                 self.issue_commands_to_players(message['dy'],message['dx'],message['id'])
@@ -49,13 +53,13 @@ class Game(object):
 
 
     def reset(self):
-
         pass
+        
 
 
-    def add_player(self,id):
+    def add_player(self,id, color):
 
-        self.room.player_list.append(Player(1, 1, id))
+        self.room.player_list.append(Player(1, 1, id, color))
 
 
 
@@ -78,7 +82,6 @@ class Game(object):
         rect_json = self.all_list_to_json(self.room.rect_list)
         player_json  = self.all_list_to_json(self.room.player_list)
         orb_json  = self.all_list_to_json(self.room.orb_list)
-
 
 
         self.broadcast_state({"badguy_json":badguy_json, "rect_json":rect_json, "player_json":player_json, "orb_json":orb_json}) 
@@ -104,7 +107,7 @@ class Game(object):
 
                     if not(orb_x_direction == 0 and orb_y_direction == 0):
 
-                        self.room.orb_list.append(AttackOrb(orb_x_center, orb_y_center, orb_x_direction, orb_y_direction))
+                        self.room.orb_list.append(AttackOrb(orb_x_center, orb_y_center, orb_x_direction, orb_y_direction, player.color))
 
 
 
@@ -260,7 +263,7 @@ class Game(object):
 
 class AttackOrb(object):
 
-    def __init__(self, x, y, orb_x_direction, orb_y_direction):
+    def __init__(self, x, y, orb_x_direction, orb_y_direction, color):
 
         self.x_direction = orb_x_direction
         self.y_direction = orb_y_direction
@@ -270,6 +273,7 @@ class AttackOrb(object):
         self.dx = 0
         self.dy = 0
         self.speed = 0.2
+        self.color = color
 
     def to_json(self):
 
@@ -278,6 +282,7 @@ class AttackOrb(object):
                 "y":self.y, 
                 "y_direction":self.y_direction, 
                 "width":self.width, 
+                "color":self.color
                 }
 
     def move(self):
@@ -291,7 +296,7 @@ class AttackOrb(object):
 class Player(object):
 
 
-    def __init__(self, x, y, id):
+    def __init__(self, x, y, id, color):
 
         self.health = 3
         self.hearts = u'♥♥♥'
@@ -306,7 +311,7 @@ class Player(object):
         self.height = 0.8
         self.speed = 0.07 #of a tile
         self.id = id
-
+        self.color = color
         self.last_attack_at = None
         self.last_damage_at = None
 
@@ -354,7 +359,8 @@ class Player(object):
                 "dy":self.dy, 
                 "width":self.width, 
                 "height":self.height,
-                "is_mortal":self.is_mortal}
+                "is_mortal":self.is_mortal,
+                "color":self.color}
 
 
 class Badguy(object):

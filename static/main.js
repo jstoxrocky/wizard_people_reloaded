@@ -36,18 +36,25 @@ bones.src = "https://i.imgur.com/cXrOQAK.png";
 rat_left.src = "https://i.imgur.com/GqhYJ7I.png";
 rat_right.src = "https://i.imgur.com/rg33icE.png";
 
-
+var color_dict = {'blu':'#0266C8', 'red':'#F90101', 'yel':'#F2B50F', 'gre':'#00933B'}
 
 var canvas
 var ctx
 var width_ratio
 var height_ratio
-function create_canvas(world_width, world_height) {
+
+function initialize_canvas(){
 
     canvas = document.getElementById("canvas");
     canvas.width = document.body.clientWidth;
     canvas.height = document.body.clientHeight;
     ctx = canvas.getContext("2d");
+
+}
+
+
+
+function create_map(world_width, world_height) {
 
 
     tile_size = Math.min(canvas.width / world_width, canvas.height / world_height)
@@ -58,6 +65,11 @@ function create_canvas(world_width, world_height) {
     height_ratio = canvas.height / world_height
 
 }
+
+
+
+
+
 
 
 function clear_canvas() {
@@ -173,11 +185,31 @@ function draw_players(player_json){
 
     for (i = 0; i < player_json.length; i++) { 
 
+
+        if (player_json[i]['color'] == 'red'){
+            right_image = wizard_red_right
+            left_image = wizard_red_left
+        }
+        if (player_json[i]['color'] == 'blu'){
+            right_image = wizard_blu_right
+            left_image = wizard_blu_left
+        }
+        if (player_json[i]['color'] == 'gre'){
+            right_image = wizard_gre_right
+            left_image = wizard_gre_left
+        }
+        if (player_json[i]['color'] == 'yel'){
+            right_image = wizard_yel_right
+            left_image = wizard_yel_left
+        }
+
+
+
         if (player_json[i]['dx']>=0){
-            image = wizard_blu_right;
+            image = right_image;
         }
         else{
-            image = wizard_blu_left;
+            image = left_image;
         }
 
         draw_character(player_json[i], image)
@@ -192,10 +224,9 @@ function draw_orbs(orb_json){
 
     for (i = 0; i < orb_json.length; i++) { 
 
-
         o_dict = scale_x_y_w_h(orb_json[i]['x'], orb_json[i]['y'], orb_json[i]['width'], orb_json[i]['width'])
 
-        draw_circle("#C1F0F6", o_dict['x'], o_dict['y'], o_dict['w'])
+        draw_circle(color_dict[orb_json[i]['color']], o_dict['x'], o_dict['y'], o_dict['w'])
 
 
     }
@@ -210,10 +241,11 @@ function draw_orbs(orb_json){
 function draw_health(player_json){
 
     offset = 0
+    
     for (i = 0; i < player_json.length; i++) { 
 
         textToPrint = player_json[i]['hearts'] 
-        ctx.fillStyle = "#104E8B";
+        ctx.fillStyle = color_dict[player_json[i]['color']]
         ctx.font = "bold 50px Arial";
         ctx.fillText(textToPrint, 20 + offset, canvas.height - 20);
         offset += 300
@@ -239,8 +271,11 @@ function drawstartScreen(){
 
 
 
-
-function updatestartScreen(){
+var redTextToPrint = 0;
+var bluTextToPrint = 0;
+var greTextToPrint = 0;
+var yelTextToPrint = 0;
+function updatestartScreen(r,b,g,y){
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -252,19 +287,19 @@ function updatestartScreen(){
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 50px Arial";
-    ctx.fillText(redTextToPrint, 0, canvas.height/2);
+    ctx.fillText(r, 0, canvas.height/2);
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 50px Arial";
-    ctx.fillText(bluTextToPrint, canvas.width/2, canvas.height/2);
+    ctx.fillText(b, canvas.width/2, canvas.height/2);
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 50px Arial";
-    ctx.fillText(greTextToPrint, canvas.width/2, canvas.height);
+    ctx.fillText(g, canvas.width/2, canvas.height);
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 50px Arial";
-    ctx.fillText(yelTextToPrint, 0, canvas.height);
+    ctx.fillText(y, 0, canvas.height);
 
 }
 
@@ -272,43 +307,7 @@ function updatestartScreen(){
 
 
 
-function clicker(){
 
-    $("body").click(function(event){  
-
-    $( ".startText" ).fadeOut( "slow", function() {
-    // Animation complete.
-    });
-
-
-
-    x = event.pageX;
-    y = event.pageY;
-
-    if (x >= canvas.width/2){
-        if (y >= canvas.height/2) {
-            col = "gre"
-        }
-        else {
-            col = "blu"
-        }
-    }
-    else {
-        if (y >= canvas.height/2) {
-            col = "yel"
-        }
-        else {
-            col = "red"
-        }
-    }
-
-    if (uidDict == undefined){
-        socket.emit('player_choose_request', {"col":col});
-    }
-    
-});
-
-}
 
 
 

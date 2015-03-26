@@ -36,19 +36,14 @@ def index():
 @socketio.on('connect')
 def on_connect():
 
-    with app.app_context():
-        if not current_app.game:
-            return
-        
-        session['id'] = current_app.id_count
-        msg = "New Connection: {}.".format(session['id'])
-        current_app.id_count += 1
+    # with app.app_context():
+    #     if not current_app.id_count:
+    #         return 
 
-        current_app.game.add_player(session['id'])
-
-        emit('connection_response', {"msg":msg, "world_width":current_app.game.world_width, "world_height":current_app.game.world_height}, broadcast=True,) 
-
-
+    session['id'] = current_app.id_count
+    msg = "New Connection: {}.".format(session['id'])
+    current_app.id_count += 1
+    emit('connection_response', {"msg":msg, "player_chosen_colors_dict":current_app.player_chosen_colors_dict}, broadcast=True,) 
 
 
 @socketio.on('keypress_request')
@@ -60,14 +55,22 @@ def keypress_func(d):
 
 
 
-@socketio.on('player_choose_request', namespace='/test')
-def playerChooseFunc(d):
+@socketio.on('player_choose_request')
+def player_choose_func(d):
 
-    pass
+        msg = "Player {} chooses {}.".format(session['id'],d['col'])
 
-    # msg = "Player {uid} chose {col} wizard.".format(uid=uid,col=d['col'])
-    # emit('assignUIDPush', {'uid':uid}, broadcast=False,) 
-    # emit('playerChoosePush', {"msg":msg, 'colsDict':colsDict}, broadcast=True,) 
+        with app.app_context():
+            current_app.player_to_color_dict[session['id']] = d['col']
+
+            for val in current_app.player_to_color_dict.values():
+                current_app.player_chosen_colors_dict[val] += 1
+
+        current_app.game.add_player(id=session['id'],color=d['col'])
+
+        
+        emit('player_choose_response', {"msg":msg, "player_chosen_colors_dict":current_app.player_chosen_colors_dict}, broadcast=True,) 
+
 
 
 
@@ -76,15 +79,33 @@ def broadcast_game_state(data):
 
 
 
-# @socketio.on('start_game_request', namespace='/test')
-# def start_game_func(d):
+@socketio.on('start_game_request')
+def start_game_func(d):
 
-#     game = Game(queue, broadcast_game_state)
+    msg = "Starting game."
+    thread = Thread(target=current_app.game.run)
+    thread.start()
+    
+    emit('start_game_response', {"msg":msg, "world_width":current_app.game.world_width, "world_height":current_app.game.world_height}, broadcast=True,) 
 
-#     thread = Thread(target=game.run)
-#     thread.start()
-#     current_app.game = game
-#     current_app.id_count = 0
+
+
+
+@socketio.on('reset_game_request')
+def reset_game_func(d):
+
+    msg = "RESET GAME"
+    current_app.game = None
+    queue.put_nowait({"type":"STOP"})
+    game = Game(queue, broadcast_game_state)
+    current_app.game = game
+
+    current_app.id_count = 0
+    current_app.player_to_color_dict = {}
+    current_app.player_chosen_colors_dict = {'red':0,'blu':0,'gre':0,'yel':0}
+    emit('connection_response', {"msg":msg, "player_chosen_colors_dict":current_app.player_chosen_colors_dict}, broadcast=True,) 
+
+
 
 
 
@@ -92,11 +113,11 @@ def broadcast_game_state(data):
 def initialize_game():
 
     game = Game(queue, broadcast_game_state)
-
-    thread = Thread(target=game.run)
-    thread.start()
     current_app.game = game
+
     current_app.id_count = 0
+    current_app.player_to_color_dict = {}
+    current_app.player_chosen_colors_dict = {'red':0,'blu':0,'gre':0,'yel':0}
 
 
 
