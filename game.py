@@ -1,4 +1,4 @@
-# -*- coding=utf -*-
+# -*- coding: utf-8 -*- 
 
 # from __future__ import print_function
 
@@ -30,27 +30,9 @@ class Game(object):
             message = None
 
             try:
-                
                 message = self.queue.get(timeout=0.005)
-                
-
             except Empty:
-                
                 message = {}
-
-                # print("SLEEPING after {} messages".format(count))
-                # count = 0
-                # sleep(0.1)
-
-            if message == "stop":
-                print("!!! stopped!")
-                break
-
-            if message:
-                # print("<-- got message: {}".format(message))
-                pass
-
-
 
             if message.get('type') == 'player_movement':
 
@@ -70,7 +52,9 @@ class Game(object):
 
 
 
+    def reset(self):
 
+        pass
 
 
     def run_game_step(self):
@@ -300,6 +284,7 @@ class Player(object):
     def __init__(self, x, y):
 
         self.health = 3
+        self.hearts = u'♥♥♥'
         self.x = x
         self.y = y
         self.points = 0
@@ -325,10 +310,9 @@ class Player(object):
 
     def take_damage(self, amount=1):
         if self.is_mortal:
-            print "hit!"
             self.health -= amount
             self.last_damage_at = time()
-            print self.health
+            self.hearts = u'♥'*self.health + u'♡'*(3-self.health)
 
 
 
@@ -351,6 +335,7 @@ class Player(object):
     def to_json(self):
 
         return {"health":self.health, 
+                "hearts":self.hearts,
                 "x":self.x, 
                 "y":self.y, 
                 "points":self.points, 
@@ -443,10 +428,10 @@ class Room(object):
                "  xxx             gg          " \
                "  x x   g                     " \
                "  xxx                         " \
-               "        p           x         " \
+               "                    x         " \
                "  xxxxxxx           x         " \
-               "  x  rr             x         " \
-               "  x rrr   x         x         " \
+               "  x  rr             xxxxxxxxx " \
+               "  x rrr             x         " \
                "  xxxxxxx           x         " \
                "                              " \
                "                   gg         " \
@@ -456,12 +441,12 @@ class Room(object):
                "                              " \
                "                              " \
                "         xxxxxxxxxxxxxxxxx    " \
-               "         x    rrr    rr       " \
-               "           rrrr       rx      " \
+               "         x    rrr    rr  x    " \
+               "                      r       " \
                "         x               x    " \
-               "         xxxxxxxxxxxxxxxxxxxx " \
+               "         xxxxxxxxxxxxxxxxx    " \
                "    gg                        " \
-               "                              " \
+               "                 p            " \
                "                              " \
                "                              " \
 

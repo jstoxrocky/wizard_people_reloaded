@@ -53,17 +53,9 @@ def on_connect():
 def keypress_func(d):
 
     d['id'] = session['id']
-    # print d['id']
     queue.put_nowait(d)
     emit('key_press_response', broadcast=True,) 
 
-
-# @app.route("/message/<message>")
-# def send_message(message):
-#     print("--> sending message: {}".format(message))
-
-#     queue.put_nowait(message)
-#     return "ok"
 
 
 

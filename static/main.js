@@ -57,6 +57,7 @@ function update_canvas(badguy_json, rect_json, player_json, orb_json) {
     draw_badguys(badguy_json)
     draw_players(player_json)
     draw_orbs(orb_json)
+    draw_health(player_json)
 
 }
 
@@ -185,6 +186,23 @@ function draw_orbs(orb_json){
 
 }
 
+
+
+
+function draw_health(player_json){
+
+    offset = 0
+    for (i = 0; i < player_json.length; i++) { 
+
+        textToPrint = player_json[i]['hearts'] 
+        ctx.fillStyle = "#104E8B";
+        ctx.font = "bold 50px Arial";
+        ctx.fillText(textToPrint, 20 + offset, canvas.height - 20);
+        offset += 300
+
+    }
+
+}
 
 
 
