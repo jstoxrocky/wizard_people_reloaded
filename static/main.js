@@ -1,22 +1,40 @@
-
-
+var coin = new Image();
+var ruby = new Image();
 var goblin_left = new Image();
 var goblin_right = new Image();
-goblin_left.src = "https://i.imgur.com/gB7lEU5.png";
-goblin_right.src = "https://i.imgur.com/WYwdG3Z.png";
-
-
-var rat_left = new Image();
-var rat_right = new Image();
-rat_left.src = "https://i.imgur.com/GqhYJ7I.png";
-rat_right.src = "https://i.imgur.com/rg33icE.png";
-
+var wizard_red_left = new Image();
+var wizard_red_right = new Image();
 var wizard_blu_left = new Image();
 var wizard_blu_right = new Image();
+var wizard_gre_left = new Image();
+var wizard_gre_right = new Image();
+var wizard_yel_left = new Image();
+var wizard_yel_right = new Image();
+var bones = new Image();
+var rat_left = new Image();
+var rat_right = new Image();
+var gobking_left = new Image();
+var gobking_right = new Image();
+var potion = new Image();
+
+gobking_left.src = "http://i.imgur.com/alUMAKk.png";
+gobking_right.src = "http://i.imgur.com/9Bwvh9H.png";
+potion.src = "http://i.imgur.com/zLS5Tqf.png";
+coin.src = "https://i.imgur.com/wOxaRHq.png";
+ruby.src = "https://i.imgur.com/bAsFNAZ.png"
+goblin_left.src = "https://i.imgur.com/gB7lEU5.png";
+goblin_right.src = "https://i.imgur.com/WYwdG3Z.png";
+wizard_red_left.src = "https://i.imgur.com/ZDSfndn.png";
+wizard_red_right.src = "https://i.imgur.com/wkONQZ8.png";
 wizard_blu_left.src = "https://i.imgur.com/k2ob4Wl.png";
 wizard_blu_right.src = "https://i.imgur.com/HLY8Ipk.png";
-
-
+wizard_gre_left.src = "https://i.imgur.com/HsyJz43.png";
+wizard_gre_right.src = "https://i.imgur.com/QvhDDL5.png";
+wizard_yel_left.src = "https://i.imgur.com/b3oV1mG.png";
+wizard_yel_right.src = "https://i.imgur.com/ICC5ViR.png";
+bones.src = "https://i.imgur.com/cXrOQAK.png";
+rat_left.src = "https://i.imgur.com/GqhYJ7I.png";
+rat_right.src = "https://i.imgur.com/rg33icE.png";
 
 
 
@@ -203,6 +221,97 @@ function draw_health(player_json){
     }
 
 }
+
+
+
+function drawstartScreen(){
+
+    wizard_yel_right.onload = function() {
+        ctx.drawImage(wizard_red_right, 0, 0, canvas.width/2, canvas.height/2);
+        ctx.drawImage(wizard_blu_right, canvas.width-canvas.width/2, 0, canvas.width/2, canvas.height/2);
+        ctx.drawImage(wizard_yel_right, 0, canvas.height-canvas.height/2, canvas.width/2, canvas.height/2);
+        ctx.drawImage(wizard_gre_right, canvas.width-canvas.width/2, canvas.height-canvas.height/2, canvas.width/2, canvas.height/2);
+
+    }
+
+
+}
+
+
+
+
+function updatestartScreen(){
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.drawImage(wizard_red_right, 0, 0, canvas.width/2, canvas.height/2);
+    ctx.drawImage(wizard_blu_right, canvas.width-canvas.width/2, 0, canvas.width/2, canvas.height/2);
+    ctx.drawImage(wizard_yel_right, 0, canvas.height-canvas.height/2, canvas.width/2, canvas.height/2);
+    ctx.drawImage(wizard_gre_right, canvas.width-canvas.width/2, canvas.height-canvas.height/2, canvas.width/2, canvas.height/2);
+
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 50px Arial";
+    ctx.fillText(redTextToPrint, 0, canvas.height/2);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 50px Arial";
+    ctx.fillText(bluTextToPrint, canvas.width/2, canvas.height/2);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 50px Arial";
+    ctx.fillText(greTextToPrint, canvas.width/2, canvas.height);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 50px Arial";
+    ctx.fillText(yelTextToPrint, 0, canvas.height);
+
+}
+
+
+
+
+
+function clicker(){
+
+    $("body").click(function(event){  
+
+    $( ".startText" ).fadeOut( "slow", function() {
+    // Animation complete.
+    });
+
+
+
+    x = event.pageX;
+    y = event.pageY;
+
+    if (x >= canvas.width/2){
+        if (y >= canvas.height/2) {
+            col = "gre"
+        }
+        else {
+            col = "blu"
+        }
+    }
+    else {
+        if (y >= canvas.height/2) {
+            col = "yel"
+        }
+        else {
+            col = "red"
+        }
+    }
+
+    if (uidDict == undefined){
+        socket.emit('player_choose_request', {"col":col});
+    }
+    
+});
+
+}
+
+
+
 
 
 

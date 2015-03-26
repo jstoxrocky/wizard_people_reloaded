@@ -12,12 +12,9 @@ MAP_HEIGHT = 25
 class Game(object):
     def __init__(self, queue, broadcast_state_function):
         self.queue = queue
-
         self.world_width = MAP_WIDTH
         self.world_height = MAP_HEIGHT
-
         self.room = Room()
-                
         self.broadcast_state = broadcast_state_function
 
     def run(self):
@@ -36,15 +33,14 @@ class Game(object):
 
             if message.get('type') == 'player_movement':
 
-                self.issue_commands_to_players(message['dy'],message['dx'])
+                self.issue_commands_to_players(message['dy'],message['dx'],message['id'])
                 self.correct_character_decisions_for_collisions_with_canvas_bounds(self.room.player_list)
                 self.correct_character_decisions_for_collisons_with_rectangles(self.room.player_list)
-                self.move_characters(self.room.player_list)
+                self.move_players(self.room.player_list, message['id'])
 
             if message.get('type') == 'attack':
 
-                self.create_orbs_for_players(message['attack_x_direction'],message['attack_y_direction'])
-
+                self.create_orbs_for_players(message['attack_x_direction'],message['attack_y_direction'],message['id'])
 
             if game_counter % 5 == 0:
 
@@ -55,6 +51,13 @@ class Game(object):
     def reset(self):
 
         pass
+
+
+    def add_player(self,id):
+
+        self.room.player_list.append(Player(1, 1, id))
+
+
 
 
     def run_game_step(self):
@@ -81,25 +84,27 @@ class Game(object):
         self.broadcast_state({"badguy_json":badguy_json, "rect_json":rect_json, "player_json":player_json, "orb_json":orb_json}) 
 
 
-    def create_orbs_for_players(self, orb_x_direction, orb_y_direction):
+    def create_orbs_for_players(self, orb_x_direction, orb_y_direction, id):
 
 
 
         for player in self.room.player_list:
 
-            if player.can_attack:
+            if player.id == id:
 
-                player_y_center = (player.y + player.y + player.height ) / 2.0
-                player_x_center = (player.x + player.x + player.width) / 2.0
+                if player.can_attack:
 
-                orb_x_center = player_x_center + orb_x_direction*player.width
-                orb_y_center = player_y_center + orb_y_direction*player.height
+                    player_y_center = (player.y + player.y + player.height ) / 2.0
+                    player_x_center = (player.x + player.x + player.width) / 2.0
 
-                player.last_attack_at = time()
+                    orb_x_center = player_x_center + orb_x_direction*player.width
+                    orb_y_center = player_y_center + orb_y_direction*player.height
 
-                if not(orb_x_direction == 0 and orb_y_direction == 0):
+                    player.last_attack_at = time()
 
-                    self.room.orb_list.append(AttackOrb(orb_x_center, orb_y_center, orb_x_direction, orb_y_direction))
+                    if not(orb_x_direction == 0 and orb_y_direction == 0):
+
+                        self.room.orb_list.append(AttackOrb(orb_x_center, orb_y_center, orb_x_direction, orb_y_direction))
 
 
 
@@ -154,10 +159,12 @@ class Game(object):
         return list_of_json
 
 
-    def issue_commands_to_players(self, dy, dx):
+    def issue_commands_to_players(self, dy, dx, id):
+
         for player in self.room.player_list:
-            player.dx = dx*player.speed
-            player.dy = dy*player.speed
+            if player.id == id:
+                player.dx = dx*player.speed
+                player.dy = dy*player.speed
 
 
     def make_badguy_decisions(self):
@@ -235,11 +242,14 @@ class Game(object):
                     player.take_damage()
 
 
-
-
     def move_characters(self, character_list):
         for character in character_list:
             character.move()
+
+    def move_players(self, character_list, id):
+        for character in character_list:
+            if character.id == id:
+                character.move()
 
 
 
@@ -281,7 +291,7 @@ class AttackOrb(object):
 class Player(object):
 
 
-    def __init__(self, x, y):
+    def __init__(self, x, y, id):
 
         self.health = 3
         self.hearts = u'♥♥♥'
@@ -295,6 +305,7 @@ class Player(object):
         self.width = 0.8 #half of tile
         self.height = 0.8
         self.speed = 0.07 #of a tile
+        self.id = id
 
         self.last_attack_at = None
         self.last_damage_at = None
@@ -477,8 +488,8 @@ class Room(object):
                     self.badguy_list.append(Badguy('rat', x, y))
                 elif item == 'g':
                     self.badguy_list.append(Badguy('goblin', x, y))
-                elif item == 'p':
-                    self.player_list.append(Player(x, y))
+                # elif item == 'p':
+                #     self.player_list.append(Player(x, y))
 
 
 
