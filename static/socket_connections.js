@@ -26,8 +26,8 @@ socket.on('connection_response', function(d) {
 //update canvas
 socket.on('get_game_state_response', function(d) {
 
-    console.log(d.msg);
-    update_canvas(d.badguy_json, d.rect_json, d.player_json)
+    // console.log(d.msg);
+    update_canvas(d.badguy_json, d.rect_json, d.player_json, d.orb_json)
 
 });
 
@@ -41,8 +41,6 @@ socket.on('key_press_response', function(d) {
 
 
 listenForKeypressLoop();
-
-
 
 
 
@@ -77,37 +75,70 @@ function listenForKeypressLoop() {
         }
 
 
-        if (keyState[37] || keyState[38] || keyState[39] || keyState[40]) {
+        // if (keyState[37] || keyState[38] || keyState[39] || keyState[40]) {
 
-                x = 0;
-                y = 0;
+        //         x = 0;
+        //         y = 0;
 
-                //w 119
-                if(keyState[38]) {
-                    y -= 1;
-                }
-                //a 97
-                if(keyState[37]) {
-                    x -= 1;
-                }
-                // s 115
-                if(keyState[40]){
-                    y += 1;
-                }
-                // d 100
-                if(keyState[39]) {
-                    x += 1;
-                }
+        //         //w 119
+        //         if(keyState[38]) {
+        //             y -= 1;
+        //         }
+        //         //a 97
+        //         if(keyState[37]) {
+        //             x -= 1;
+        //         }
+        //         // s 115
+        //         if(keyState[40]){
+        //             y += 1;
+        //         }
+        //         // d 100
+        //         if(keyState[39]) {
+        //             x += 1;
+        //         }
 
-                socket.emit('keypress_request', {"type":"attack", "attack_x_direction": x, "attack_y_direction": y});
+        //         socket.emit('keypress_request', {"type":"attack", "attack_x_direction": x, "attack_y_direction": y, "counter":counter});
 
-        }
+        // }
+
 
         timer  = setTimeout(listenForKeypressLoop, 20);
 
 }
 
 
+
+$(document).keydown(function(e) {
+
+    x = 0;
+    y = 0;
+
+    if (e.which == 37 || e.which == 38 || e.which == 39 || e.which == 40) {
+
+        if (e.which == 37) {
+            // console.log("left")
+            x -= 1;
+        }
+            if (e.which == 38) {
+            // console.log("left")
+            y -= 1;
+        }
+            if (e.which == 39) {
+            // console.log("left")
+            x += 1;
+        }
+            if (e.which == 40) {
+            // console.log("left")
+            y += 1;
+        }
+
+        socket.emit('keypress_request', {"type":"attack", "attack_x_direction": x, "attack_y_direction": y});
+
+    }
+
+    
+
+});
 
 
 

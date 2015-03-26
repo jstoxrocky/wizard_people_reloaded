@@ -5,7 +5,7 @@ from gevent import monkey
 monkey.patch_all()
 
 #do some imports!
-from flask import Flask, render_template, request, jsonify, current_app
+from flask import Flask, render_template, request, jsonify, current_app, session
 from flask.ext.socketio import SocketIO, emit
 import urllib, json
 # from Queue import Empty
@@ -35,12 +35,15 @@ def index():
 
 @socketio.on('connect')
 def on_connect():
-    msg = "New Connection."
+
 
     with app.app_context():
         if not current_app.game:
             return
-            
+        
+        session['id'] = current_app.id_count
+        msg = "New Connection: {}.".format(session['id'])
+        current_app.id_count += 1
         emit('connection_response', {"msg":msg, "world_width":current_app.game.world_width, "world_height":current_app.game.world_height}, broadcast=True,) 
 
 
@@ -48,6 +51,9 @@ def on_connect():
 
 @socketio.on('keypress_request')
 def keypress_func(d):
+
+    d['id'] = session['id']
+    # print d['id']
     queue.put_nowait(d)
     emit('key_press_response', broadcast=True,) 
 
@@ -73,6 +79,7 @@ def initialize_game():
     thread = Thread(target=game.run)
     thread.start()
     current_app.game = game
+    current_app.id_count = 0
 
 
 

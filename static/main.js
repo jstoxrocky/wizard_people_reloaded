@@ -50,13 +50,13 @@ function clear_canvas() {
 
 
 
-function update_canvas(badguy_json, rect_json, player_json) {
+function update_canvas(badguy_json, rect_json, player_json, orb_json) {
 
     clear_canvas()
     draw_walls(rect_json)
     draw_badguys(badguy_json)
     draw_players(player_json)
-    attack(player_json)
+    draw_orbs(orb_json)
 
 }
 
@@ -152,23 +152,17 @@ function draw_players(player_json){
 }
 
 
-function attack(player_json){
+function draw_orbs(orb_json){
 
 
-    for (i = 0; i < player_json.length; i++) { 
+    for (i = 0; i < orb_json.length; i++) { 
 
 
-        p_dict = scale_x_y_w_h(player_json[i]['x'], player_json[i]['y'], player_json[i]['width'], player_json[i]['height'])
+        o_dict = scale_x_y_w_h(orb_json[i]['x'], orb_json[i]['y'], orb_json[i]['width'], orb_json[i]['width'])
 
-        player_y_center = (p_dict['y'] + p_dict['y'] + p_dict['h'] ) / 2.0
-        player_x_center = (p_dict['x'] + p_dict['x'] + p_dict['w']) / 2.0
+        draw_circle("#C1F0F6", o_dict['x'], o_dict['y'], o_dict['w'])
 
-        attack_x_center = player_x_center + player_json[i]['attack_x_direction']*p_dict['w']
-        attack_y_center = player_y_center + player_json[i]['attack_y_direction']*p_dict['h']
 
-        draw_circle("#C1F0F6", attack_x_center, attack_y_center, p_dict['w'])
-
- 
     }
 
 
@@ -185,6 +179,7 @@ var mult;
 window.addEventListener('keydown',function(e){
     keyState[e.keyCode || e.which] = true;
 },true);    
+
 window.addEventListener('keyup',function(e){
     keyState[e.keyCode || e.which] = false;
 },true);
