@@ -85,6 +85,7 @@ class Game(object):
         self.remove_orb_if_collision_with_walls()
 
         self.remove_badguy_if_collision_with_orb()
+        self.update_player_health()
 
         badguy_json = self.all_list_to_json(self.room.badguy_list)
         rect_json = self.all_list_to_json(self.room.rect_list)
@@ -242,6 +243,15 @@ class Game(object):
 
 
 
+    def update_player_health(self):
+
+        for badguy in self.room.badguy_list:
+            for player in self.room.player_list:
+                if self.rectangle_on_rectangle_collision(badguy, player):
+                    player.take_damage()
+
+
+
 
     def move_characters(self, character_list):
         for character in character_list:
@@ -300,13 +310,25 @@ class Player(object):
         self.width = 0.8 #half of tile
         self.height = 0.8
         self.speed = 0.07 #of a tile
-        # self.orb = None
+
         self.last_attack_at = None
+        self.last_damage_at = None
 
     @property
     def can_attack(self):
-
         return not self.last_attack_at or time() - self.last_attack_at >= 0.3
+
+    @property
+    def is_mortal(self):
+        return not self.last_damage_at or time() - self.last_damage_at >= 1
+
+
+    def take_damage(self, amount=1):
+        if self.is_mortal:
+            print "hit!"
+            self.health -= amount
+            self.last_damage_at = time()
+            print self.health
 
 
 
@@ -326,11 +348,6 @@ class Player(object):
             self.y_direction = -1
 
 
-    # def create_orb(self, orb_x_center, orb_y_center, orb_x_direction, orb_y_direction):
-    #     self.orb =  AttackOrb(orb_x_center, orb_y_center, orb_x_direction, orb_y_direction)
-
-
-
     def to_json(self):
 
         return {"health":self.health, 
@@ -340,7 +357,8 @@ class Player(object):
                 "dx":self.dx, 
                 "dy":self.dy, 
                 "width":self.width, 
-                "height":self.height}
+                "height":self.height,
+                "is_mortal":self.is_mortal}
 
 
 class Badguy(object):

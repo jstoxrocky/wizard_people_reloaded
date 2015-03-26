@@ -102,8 +102,24 @@ function draw_walls(rect_json){
 
 
 function draw_character(character_json, image){
-        c_dict = scale_x_y_w_h(character_json[i].x, character_json[i].y, character_json[i].width, character_json[i].height)
+
+        c_dict = scale_x_y_w_h(character_json.x, character_json.y, character_json.width, character_json.height)
         ctx.drawImage(image, c_dict['x'], c_dict['y'], c_dict['w'], c_dict['h']);
+        
+
+        if (character_json.is_mortal==false){
+
+            center_x = c_dict.x + (c_dict.w/2)
+            center_y = c_dict.y + (c_dict.h/2)
+
+
+            ctx.save();
+            ctx.globalAlpha = 0.4;
+            draw_circle("#FFCCCC", center_x, center_y, c_dict.w/1.5)
+            ctx.restore();
+        }
+
+        
 }
 
 
@@ -128,7 +144,7 @@ function draw_badguys(badguy_json){
             image = img_left;
         }
 
-        draw_character(badguy_json, image)
+        draw_character(badguy_json[i], image)
 
     }
 }
@@ -145,7 +161,7 @@ function draw_players(player_json){
             image = wizard_blu_left;
         }
 
-        draw_character(player_json, image)
+        draw_character(player_json[i], image)
 
     }
 
