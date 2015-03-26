@@ -2,13 +2,15 @@
 $(document).ready(function(){
 
 
-$("body").append("<div class='startText' id='title'>WIZARD PEOPLE</div>")
-$("body").append("<div class='startText' id='instructions'>CLICK TO SELECT A WIZARD</div>")
-$("body").append("<div class='startText' id='instructions2'>WAIT FOR OTHER PLAYERS</div>")
-$("body").append("<div class='startText' id='instructions3'>PRESS ENTER TO BEGIN</div>")
+// $("black_box").append("<p class='startText' id='title'>WIZARD PEOPLE</p>")
+// $("black_box").append("<p class='startText' id='instructions'>CLICK TO SELECT A WIZARD</p>")
+// $("black_box").append("<p class='startText' id='instructions2'>WAIT FOR OTHER PLAYERS</p>")
+// $("black_box").append("<p class='startText' id='instructions3'>PRESS ENTER TO BEGIN</p>")
 
-$("body").append("<div class='startText' id='instructions4'>A,S,W,D TO MOVE</div>")
-$("body").append("<div class='startText' id='instructions5'>ARROW KEYS TO CAST SPELLS</div>")
+// $("black_box").append("<p class='startText' id='instructions4'>A,S,W,D TO MOVE</p>")
+// $("black_box").append("<p class='startText' id='instructions5'>ARROW KEYS TO CAST SPELLS</p>")
+
+
 
 //connection
 var socket = io.connect('http://' + document.domain + ':' + location.port);
@@ -22,11 +24,12 @@ socket.on('connect', function() {
 //create canvas
 socket.on('connection_response', function(d) {
 
-    console.log(d.msg);
-    initialize_canvas()
-    drawstartScreen();
-    updatestartScreen(d.player_chosen_colors_dict.red, d.player_chosen_colors_dict.blu, d.player_chosen_colors_dict.gre, d.player_chosen_colors_dict.yel)
-    clicker();
+
+        console.log(d.msg);
+        initialize_canvas()
+        drawstartScreen();
+        updatestartScreen(d.player_chosen_colors_dict.red, d.player_chosen_colors_dict.blu, d.player_chosen_colors_dict.gre, d.player_chosen_colors_dict.yel)
+        clicker();
 
 });
 
@@ -46,7 +49,7 @@ socket.on('start_game_response', function(d) {
 //update canvas
 socket.on('get_game_state_response', function(d) {
 
-    update_canvas(d.badguy_json, d.rect_json, d.player_json, d.orb_json)
+    update_canvas(d.badguy_json, d.rect_json, d.player_json, d.orb_json, d.room_json)
 
 });
 
@@ -149,6 +152,10 @@ function clicker(){
     $("body").click(function(event){  
 
         $( ".startText" ).fadeOut( "slow", function() {
+        // Animation complete.
+        });
+
+        $( ".bdiv" ).fadeOut( "slow", function() {
         // Animation complete.
         });
 

@@ -56,7 +56,6 @@ function initialize_canvas(){
 
 function create_map(world_width, world_height) {
 
-
     tile_size = Math.min(canvas.width / world_width, canvas.height / world_height)
     canvas.width = tile_size * world_width
     canvas.height = tile_size * world_height
@@ -72,17 +71,17 @@ function create_map(world_width, world_height) {
 
 
 
-function clear_canvas() {
+function clear_canvas(room_json) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#659D32";
+    ctx.fillStyle = room_json.bg_color;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 
 
-function update_canvas(badguy_json, rect_json, player_json, orb_json) {
+function update_canvas(badguy_json, rect_json, player_json, orb_json, room_json) {
 
-    clear_canvas()
+    clear_canvas(room_json)
     draw_walls(rect_json)
     draw_badguys(badguy_json)
     draw_players(player_json)
@@ -142,7 +141,6 @@ function draw_character(character_json, image){
 
             center_x = c_dict.x + (c_dict.w/2)
             center_y = c_dict.y + (c_dict.h/2)
-
 
             ctx.save();
             ctx.globalAlpha = 0.4;
@@ -226,8 +224,10 @@ function draw_orbs(orb_json){
 
         o_dict = scale_x_y_w_h(orb_json[i]['x'], orb_json[i]['y'], orb_json[i]['width'], orb_json[i]['width'])
 
+        ctx.save();
+        ctx.globalAlpha = 0.5;
         draw_circle(color_dict[orb_json[i]['color']], o_dict['x'], o_dict['y'], o_dict['w'])
-
+        ctx.restore();
 
     }
 

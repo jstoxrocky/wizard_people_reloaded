@@ -43,6 +43,44 @@ div {
 }
 
 
+
+#black_box {
+    /*width:50%;*/
+    /*height:60%;*/
+    background-color:rgba(0,0,0,0.8);
+    /*opacity:0.5;*/
+}
+
+
+.outer {
+    display: table;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    /*position: absolute;*/
+}
+
+.middle {
+    /*display: table-cell;*/
+    vertical-align: middle;
+}
+
+.inner {
+    /*margin-left: 0 auto;*/
+    /*margin-right: 0 auto; */
+}
+
+
+.startText {
+    opacity:1.0;
+}
+
+
+
+
+
+
+
 /*.centered {
   position: fixed;
   left: 15%;

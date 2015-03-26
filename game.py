@@ -2,7 +2,7 @@
 
 # from __future__ import print_function
 
-from random import uniform
+from random import uniform, randint
 from Queue import Empty
 from time import sleep, time
 
@@ -82,9 +82,14 @@ class Game(object):
         rect_json = self.all_list_to_json(self.room.rect_list)
         player_json  = self.all_list_to_json(self.room.player_list)
         orb_json  = self.all_list_to_json(self.room.orb_list)
+        room_json = self.room.to_json()
 
 
-        self.broadcast_state({"badguy_json":badguy_json, "rect_json":rect_json, "player_json":player_json, "orb_json":orb_json}) 
+        self.broadcast_state({"badguy_json":badguy_json, 
+                              "rect_json":rect_json, 
+                              "player_json":player_json, 
+                              "orb_json":orb_json, 
+                              "room_json":room_json}) 
 
 
     def create_orbs_for_players(self, orb_x_direction, orb_y_direction, id):
@@ -143,12 +148,15 @@ class Game(object):
 
     def remove_badguy_if_collision_with_orb(self):
 
-            for orb in self.room.orb_list:
-                for badguy in self.room.badguy_list:
+            
+            for badguy in self.room.badguy_list:
+                for orb in self.room.orb_list:
                     if self.circle_on_rectangle_collision(orb, badguy):
-                        # import pdb; pdb.set_trace()
+                        
                         self.room.badguy_list.remove(badguy)
                         self.room.orb_list.remove(orb)
+                        break
+
 
 
 
@@ -373,8 +381,8 @@ class Badguy(object):
         self.dx = 0
         self.dy = 0
         self.type = type
-        self.y_direction = 1
-        self.x_direction = 1
+        self.y_direction = randint(-1,1)
+        self.x_direction = randint(-1,1)
         
         if type=='goblin':
             self.speed = 0.02
@@ -383,7 +391,7 @@ class Badguy(object):
             self.action = self.patrol
 
         elif type=='rat':
-            self.speed = 0.01
+            self.speed = 0.02
             self.width = 0.8
             self.height = 0.5 
             self.action = self.explore
@@ -423,13 +431,13 @@ class Badguy(object):
 
 class Rect(object):
 
-    def __init__(self, x, y):
+    def __init__(self, x, y, color):
 
         self.width = 1
         self.height = 1
         self.x = x
         self.y = y
-        self.color = "#855E42"
+        self.color = color
 
     def to_json(self):
 
@@ -472,7 +480,32 @@ class Room(object):
         self.width = MAP_WIDTH
         self.height = MAP_HEIGHT
 
+        self.select_color_palette()
         self.build_room(room)
+        
+
+
+    def select_color_palette(self):
+    
+        level_type_list = ['cave', 'grassy', 'icy', 'sand']
+        level_number = randint(0,3)
+
+        if level_type_list[level_number] == 'grassy':
+            color_list = ['#999999','#35373b', '#8C8C8C', '#212121', "#4f4f4f"]
+            bg_color = '#659D32'
+        elif level_type_list[level_number] == 'cave':
+            color_list = ['#42526C','#35373b', '#2F4F4F', '#212121', "#4f4f4f"]
+            bg_color = '#8C8C8C'
+        elif level_type_list[level_number] == 'icy':
+            color_list = ['#BFEFFF','#35373b', '#82CFFD', '#212121', "#4f4f4f"]
+            bg_color = '#FFFAFA'
+        elif level_type_list[level_number] == 'sand':
+            color_list = ['#956c4b','#905120', '#502d12', '#d4803f', "#b08563"]
+            bg_color = '#edd9af'
+
+        self.bg_color = bg_color
+        self.color_list = color_list
+
         
     def build_room(self, room_map):
 
@@ -488,15 +521,16 @@ class Room(object):
 
                 if item == 'x':
                     # TODO: rename to Wall
-                    rect = Rect(x, y)
+                    rect = Rect(x, y, color=self.color_list[randint(0,len(self.color_list)-1)])
                     self.rect_list.append(rect)
                 elif item == 'r':
                     self.badguy_list.append(Badguy('rat', x, y))
                 elif item == 'g':
                     self.badguy_list.append(Badguy('goblin', x, y))
-                # elif item == 'p':
-                #     self.player_list.append(Player(x, y))
 
+    def to_json(self):
+
+        return {"bg_color": self.bg_color}
 
 
 
