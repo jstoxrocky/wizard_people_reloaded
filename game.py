@@ -94,6 +94,7 @@ class Game(object):
         rect_json = self.all_list_to_json(self.room.rect_list)
         player_json  = self.all_list_to_json(self.room.player_list)
         orb_json  = self.all_list_to_json(self.room.orb_list)
+        bone_json  = self.all_list_to_json(self.room.bone_list)
         room_json = self.room.to_json()
 
 
@@ -102,7 +103,8 @@ class Game(object):
                               "player_json":player_json, 
                               "orb_json":orb_json, 
                               "room_json":room_json,
-                              "game_json":self.game_json}) 
+                              "game_json":self.game_json,
+                              "bone_json":bone_json}) 
 
 
     def create_orbs_for_players(self, orb_x_direction, orb_y_direction, id):
@@ -169,6 +171,9 @@ class Game(object):
                         
                         self.room.badguy_list.remove(badguy)
                         self.room.orb_list.remove(orb)
+
+                        self.room.bone_list.append(Bone(badguy.x,badguy.y))
+
                         break
 
 
@@ -462,6 +467,20 @@ class Rect(object):
         return {"x":self.x, "y":self.y, "width":self.width, "height":self.height, "color":self.color}
 
 
+
+class Bone(object):
+
+    def __init__(self,x,y):
+
+        self.x = x
+        self.y = y
+        self.width = 0.5
+        self.height = 0.5
+
+    def to_json(self):
+        return {"x":self.x, "y":self.y, "width":self.width, "height":self.height}
+
+
 class Room(object):
 
     def __init__(self):
@@ -531,6 +550,8 @@ class Room(object):
         self.badguy_list = []
         self.player_list = []
         self.orb_list = []
+        self.bone_list = []
+
 
         for x in range(0, MAP_WIDTH):
             for y in range(0, MAP_HEIGHT):

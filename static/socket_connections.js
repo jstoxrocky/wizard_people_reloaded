@@ -49,7 +49,7 @@ socket.on('start_game_response', function(d) {
 //update canvas
 socket.on('get_game_state_response', function(d) {
 
-    update_canvas(d.badguy_json, d.rect_json, d.player_json, d.orb_json, d.room_json)
+    update_canvas(d.badguy_json, d.rect_json, d.player_json, d.orb_json, d.room_json, d.bone_json)
 
     if (d.game_json > 0) {
         console.log("game over")

@@ -79,7 +79,7 @@ function clear_canvas(room_json) {
 
 
 
-function update_canvas(badguy_json, rect_json, player_json, orb_json, room_json) {
+function update_canvas(badguy_json, rect_json, player_json, orb_json, room_json, bone_json) {
 
     clear_canvas(room_json)
     draw_walls(rect_json)
@@ -87,6 +87,7 @@ function update_canvas(badguy_json, rect_json, player_json, orb_json, room_json)
     draw_players(player_json)
     draw_orbs(orb_json)
     draw_health(player_json)
+    draw_bones(bone_json)
 
 }
 
@@ -254,6 +255,20 @@ function draw_health(player_json){
 
 }
 
+
+
+function draw_bones(bone_json){
+
+    for (i = 0; i < bone_json.length; i++) { 
+
+        b_dict = scale_x_y_w_h(bone_json[i]['x'], bone_json[i]['y'], bone_json[i]['width'], bone_json[i]['width'])
+        
+        image = bones;
+
+        ctx.drawImage(image, b_dict.x, b_dict.y, b_dict.h, b_dict.h);
+    }
+
+}
 
 
 function drawstartScreen(){
