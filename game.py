@@ -83,7 +83,7 @@ class Game(object):
             xdif = badguy.x - player.x
             ydif = badguy.y - player.y
             eucDist = (xdif**2 + ydif**2)**0.5
-            if eucDist <= 3:
+            if eucDist <= 5:
                 return player
 
         return None
@@ -603,13 +603,13 @@ class Room(object):
                "         x      x             " \
                "         x      x             " \
                "         xxxxxxxxxxxxxxxxx    " \
-               "         x    rrr    rr  x    " \
-               "            rr    k  r   x    " \
-               "         x   rr x  r     x    " \
-               "xxxx  xxxxx xxxxxxxxxxxxxx    " \
-               "    gg          x             " \
+               "         x    rrr  x  rr x    " \
+               "            rr  x  x   k x    " \
+               "         x   rr x  x     x    " \
+               "xxxx  xxxxx xxxxx        x    " \
+               "    gg          x        x    " \
+               "                xxxxxxxxxx    " \
                "                              " \
-               "                x             " \
                "                x             " \
 
 
@@ -631,40 +631,15 @@ class Room(object):
                    "  x    xxxxxxxxxxxxxxxxxxx    " \
                    "  x    x                      " \
                    "  x   xx   xxxxxxxxxxxxxxx    " \
-                   "  x    x   x  rrr    rr  x    " \
-                   "  xx   x   x     x   k r  x    " \
-                   "       x         x       x    " \
-                   "       xxxxxxxxxxxxxxxxxxx    " \
-                   "    gg                        " \
-                   "                 p            " \
+                   "  x    x   x  rrr   xrr  x    " \
+                   "  xx   x   x     x  x  k x    " \
+                   "       x       r x  x    x    " \
+                   "       xxxxxxxxxxx       x    " \
+                   "    gg           x       x    " \
+                   "                 xxxxxxxxx    " \
                    "                              " \
                    "                              " \
 
-        room_test =  "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                   g          " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
-                    "                              " \
 
 
 
