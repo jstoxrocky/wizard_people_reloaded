@@ -11,18 +11,22 @@ MAP_HEIGHT = 25
 
 class Game(object):
     def __init__(self, queue, broadcast_state_function):
+
         self.queue = queue
-        self.world_width = MAP_WIDTH
-        self.world_height = MAP_HEIGHT
-        self.room = Room()
         self.broadcast_state = broadcast_state_function
-        self.game_json = 0
+        self.reset()
 
     def run(self):
+
+        self.state = "running"
 
         game_counter = 0
         while True:
 
+            if self.state == "over":
+                self.reset()
+                self.status == "running"
+                break
 
             game_counter += 1
             message = None
@@ -47,21 +51,58 @@ class Game(object):
 
                 self.create_orbs_for_players(message['attack_x_direction'],message['attack_y_direction'],message['id'])
 
+            if message.get('type') == 'build':
+
+                self.add_player_built_walls_to_rect_list(message['id'])
+
             if game_counter % 5 == 0:
 
                 self.run_game_step()
 
+
+
+    def make_badguy_decisions(self):
+        
+        for badguy in self.room.badguy_list:
+
+            target_player = self.check_if_badguys_close_enough_to_chase(badguy)
+
+            if target_player:
+
+                badguy.chase(target_player)
+
+            else:
+
+                badguy.action()
+
                     
+    def check_if_badguys_close_enough_to_chase(self,badguy):
+
+        for player in self.room.player_list:
+
+            xdif = badguy.x - player.x
+            ydif = badguy.y - player.y
+            eucDist = (xdif**2 + ydif**2)**0.5
+            if eucDist <= 3:
+                return player
+
+        return None
 
 
 
     def reset(self):
-        pass
+        
+        self.world_width = MAP_WIDTH
+        self.world_height = MAP_HEIGHT
+        self.room = Room()
+        self.state = "init"
+
+        self.id_count = 0
+        self.player_to_color_dict = {}
+        self.player_chosen_colors_dict = {'red':0,'blu':0,'gre':0,'yel':0}
         
 
-
     def add_player(self,id, color):
-
         self.room.player_list.append(Player(1, 1, id, color))
 
     def remove_dead_players(self):
@@ -87,8 +128,8 @@ class Game(object):
         self.remove_dead_players()
 
 
-        if self.no_more_players_left:
-            self.game_json = 1
+        if self.no_more_players_left or self.no_more_badguys_left:
+            self.state = "over"
 
         badguy_json = self.all_list_to_json(self.room.badguy_list)
         rect_json = self.all_list_to_json(self.room.rect_list)
@@ -103,8 +144,17 @@ class Game(object):
                               "player_json":player_json, 
                               "orb_json":orb_json, 
                               "room_json":room_json,
-                              "game_json":self.game_json,
+                              "game_over":self.state == "over",
                               "bone_json":bone_json}) 
+
+
+
+
+    def add_player_built_walls_to_rect_list(self, id):
+
+        for player in self.room.player_list:
+            if player.id == id:
+                self.room.rect_list.append(player.build_wall())     
 
 
     def create_orbs_for_players(self, orb_x_direction, orb_y_direction, id):
@@ -127,12 +177,15 @@ class Game(object):
 
                     if not(orb_x_direction == 0 and orb_y_direction == 0):
 
-                        self.room.orb_list.append(AttackOrb(orb_x_center, orb_y_center, orb_x_direction, orb_y_direction, player.color))
+                        self.room.orb_list.append(AttackOrb(orb_x_center, orb_y_center, orb_x_direction, orb_y_direction, player.color, player.id))
 
     @property
     def no_more_players_left(self):
         return len(self.room.player_list) <= 0
 
+    @property
+    def no_more_badguys_left(self):
+        return len(self.room.badguy_list) <= 0
 
     def update_orb_position(self):
 
@@ -169,12 +222,18 @@ class Game(object):
                 for orb in self.room.orb_list:
                     if self.circle_on_rectangle_collision(orb, badguy):
                         
-                        self.room.badguy_list.remove(badguy)
                         self.room.orb_list.remove(orb)
+                        badguy.health -= 1
 
-                        self.room.bone_list.append(Bone(badguy.x,badguy.y))
+                        if badguy.health <= 0:
+                            self.room.badguy_list.remove(badguy)
+                            self.room.bone_list.append(Bone(badguy.x,badguy.y))
 
-                        break
+                            for player in self.room.player_list:
+                                if player.id == orb.shooter_id:
+                                    player.points += badguy.point_value
+
+                            break
 
 
 
@@ -197,10 +256,7 @@ class Game(object):
                 player.dy = dy*player.speed
 
 
-    def make_badguy_decisions(self):
-        
-        for badguy in self.room.badguy_list:
-            badguy.action()
+
 
 
     def correct_character_decisions_for_collisions_with_canvas_bounds(self, character_list):
@@ -290,7 +346,7 @@ class Game(object):
 
 class AttackOrb(object):
 
-    def __init__(self, x, y, orb_x_direction, orb_y_direction, color):
+    def __init__(self, x, y, orb_x_direction, orb_y_direction, color, id):
 
         self.x_direction = orb_x_direction
         self.y_direction = orb_y_direction
@@ -301,6 +357,7 @@ class AttackOrb(object):
         self.dy = 0
         self.speed = 0.2
         self.color = color
+        self.shooter_id = id
 
     def to_json(self):
 
@@ -341,6 +398,7 @@ class Player(object):
         self.color = color
         self.last_attack_at = None
         self.last_damage_at = None
+        self.wall = None
 
     @property
     def can_attack(self):
@@ -393,12 +451,16 @@ class Player(object):
                 "is_mortal":self.is_mortal,
                 "color":self.color}
 
+    def build_wall(self):
+
+        return Rect(x = self.x + self.x_direction*(self.width*1.2), y = self.y, color="#000000")
+
 
 class Badguy(object):
 
     def __init__(self,type, x, y):
 
-        self.health = 1
+        
         self.x = x
         self.y = y
         self.dx = 0
@@ -406,18 +468,31 @@ class Badguy(object):
         self.type = type
         self.y_direction = randint(-1,1)
         self.x_direction = randint(-1,1)
+
         
         if type=='goblin':
+            self.health = 1
             self.speed = 0.02
             self.width = 0.8
             self.height = 0.8 
             self.action = self.patrol
+            self.point_value = 2
 
         elif type=='rat':
+            self.health = 1
             self.speed = 0.02
             self.width = 0.8
             self.height = 0.5 
             self.action = self.explore
+            self.point_value = 1
+
+        elif type=='goblin_king':
+            self.health = 3
+            self.speed = 0.02
+            self.width = 2.0
+            self.height = 2.0
+            self.action = self.patrol
+            self.point_value = 5
 
     def patrol(self):
 
@@ -428,6 +503,23 @@ class Badguy(object):
 
         self.dy=self.y_direction*(self.speed + uniform(-0.05,0.05))
         self.dx=self.x_direction*(self.speed*3 + uniform(0,0.05))
+
+    def chase(self, player):
+
+        xdif = self.x - player.x
+        ydif = self.y - player.y
+
+        if xdif > 0:
+            self.dx = -(self.speed*3 )
+        else:
+            self.dx = (self.speed*3 )
+
+        if ydif > 0:
+            self.dy = -(self.speed*3 )
+        else:
+            self.dy = (self.speed*3 )
+
+
 
 
     def move(self):
@@ -447,7 +539,15 @@ class Badguy(object):
 
     def to_json(self):
 
-        return {"health":self.health, "x":self.x, "y":self.y, "type":self.type, "dx":self.dx, "dy":self.dy, "width":self.width, "height":self.height}
+        return {"health":self.health, 
+                "x":self.x, 
+                "y":self.y, 
+                "type":self.type, 
+                "dx":self.dx, 
+                "dy":self.dy, 
+                "width":self.width, 
+                "height":self.height,
+                "point_value":self.point_value}
 
 
 
@@ -486,31 +586,87 @@ class Room(object):
     def __init__(self):
         #       000000000011111111112222222222
         #       012345678901234567891234567890
-        room = "                              " \
-               "  xxx             gg          " \
-               "  x x   g                     " \
-               "  xxx                         " \
-               "                    x         " \
-               "  xxxxxxx           x         " \
-               "  x  rr             xxxxxxxxx " \
+        room = "          xxxxxxx             " \
+               "  xxx           x gg          " \
+               "  x x   g       x             " \
+               "                x        r    " \
+               "                x   x         " \
+               "  xxxxxxx           x r       " \
+               "  x  rr x           xxxxxxxxx " \
                "  x rrr             x         " \
-               "  xxxxxxx           x         " \
-               "                              " \
-               "                   gg         " \
-               "  xxx                         " \
+               "  xxxxxxxx      x   x         " \
+               "         x      x             " \
+               "         x      x   g         " \
+               "  xxx               r         " \
                "  x x   g                     " \
-               "  xxx                         " \
-               "                              " \
-               "                              " \
+               "  xxx    x      x             " \
+               "         x      x             " \
+               "         x      x             " \
                "         xxxxxxxxxxxxxxxxx    " \
                "         x    rrr    rr  x    " \
-               "                      r       " \
-               "         x               x    " \
-               "         xxxxxxxxxxxxxxxxx    " \
-               "    gg                        " \
-               "                 p            " \
+               "            rr    k  r   x    " \
+               "         x   rr x  r     x    " \
+               "xxxx  xxxxx xxxxxxxxxxxxxx    " \
+               "    gg          x             " \
                "                              " \
-               "                              " \
+               "                x             " \
+               "                x             " \
+
+
+
+        room_aj =  "                              " \
+                   "      x           gg          " \
+                   "    rrx  g                    " \
+                   "  xxxxx             x         " \
+                   "                    x  rr     " \
+                   "  xxxxxxxxxxxxxxxxxxx         " \
+                   "  x  rr         x   xxxxxx    " \
+                   "  x rrr     x   x        x    " \
+                   "  xxxxxxxxxxx            x    " \
+                   "     x                   x    " \
+                   "  x     x  g       gg    x    " \
+                   "  xxxxxxxxxxxx           x    " \
+                   "  x    g     x    xxxxxxxx    " \
+                   "  x  g    g  x                " \
+                   "  x    xxxxxxxxxxxxxxxxxxx    " \
+                   "  x    x                      " \
+                   "  x   xx   xxxxxxxxxxxxxxx    " \
+                   "  x    x   x  rrr    rr  x    " \
+                   "  xx   x   x     x   k r  x    " \
+                   "       x         x       x    " \
+                   "       xxxxxxxxxxxxxxxxxxx    " \
+                   "    gg                        " \
+                   "                 p            " \
+                   "                              " \
+                   "                              " \
+
+        room_test =  "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                   g          " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+                    "                              " \
+
+
 
 
 
@@ -518,7 +674,11 @@ class Room(object):
         self.height = MAP_HEIGHT
 
         self.select_color_palette()
-        self.build_room(room)
+
+        room_list = [room, room_aj]
+        curr_room = room_list[randint(0,1)]
+
+        self.build_room(curr_room)
         
 
 
@@ -566,6 +726,9 @@ class Room(object):
                     self.badguy_list.append(Badguy('rat', x, y))
                 elif item == 'g':
                     self.badguy_list.append(Badguy('goblin', x, y))
+                elif item == 'k':
+                    self.badguy_list.append(Badguy('goblin_king', x, y))
+
 
     def to_json(self):
 

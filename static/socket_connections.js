@@ -51,10 +51,11 @@ socket.on('get_game_state_response', function(d) {
 
     update_canvas(d.badguy_json, d.rect_json, d.player_json, d.orb_json, d.room_json, d.bone_json)
 
-    if (d.game_json > 0) {
+    if (d.game_over == true) {
         console.log("game over")
         $( ".bdiv").fadeIn( "slow", function() {
             $( "#title").fadeIn( "slow", function() {
+                socket.emit('connect');
 
 
             });
@@ -148,6 +149,10 @@ $(document).keydown(function(e) {
     
     if(e.which == 82) {
         socket.emit('reset_game_request',{});
+    }
+
+    if(e.which == 66) {
+        socket.emit('keypress_request', {"type":"build"});
     }
 
 

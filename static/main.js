@@ -83,11 +83,12 @@ function update_canvas(badguy_json, rect_json, player_json, orb_json, room_json,
 
     clear_canvas(room_json)
     draw_walls(rect_json)
+    draw_bones(bone_json)
     draw_badguys(badguy_json)
     draw_players(player_json)
     draw_orbs(orb_json)
     draw_health(player_json)
-    draw_bones(bone_json)
+    
 
 }
 
@@ -165,6 +166,10 @@ function draw_badguys(badguy_json){
         else if (badguy_json[i]['type'] == 'rat'){
             img_right = rat_right;
             img_left = rat_left;
+        }
+        else if (badguy_json[i]['type'] == 'goblin_king'){
+            img_right = gobking_right;
+            img_left = gobking_left;
         }
 
         if (badguy_json[i]['dx']>=0){
@@ -245,7 +250,7 @@ function draw_health(player_json){
     
     for (i = 0; i < player_json.length; i++) { 
 
-        textToPrint = player_json[i]['hearts'] 
+        textToPrint = player_json[i]['hearts']  + " " + player_json[i]['points']
         ctx.fillStyle = color_dict[player_json[i]['color']]
         ctx.font = "bold 50px Arial";
         ctx.fillText(textToPrint, 20 + offset, canvas.height - 20);
