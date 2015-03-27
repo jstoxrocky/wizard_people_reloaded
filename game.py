@@ -16,6 +16,7 @@ class Game(object):
         self.world_height = MAP_HEIGHT
         self.room = Room()
         self.broadcast_state = broadcast_state_function
+        self.game_json = 0
 
     def run(self):
 
@@ -50,6 +51,8 @@ class Game(object):
 
                 self.run_game_step()
 
+                    
+
 
 
     def reset(self):
@@ -61,7 +64,11 @@ class Game(object):
 
         self.room.player_list.append(Player(1, 1, id, color))
 
+    def remove_dead_players(self):
 
+        for player in self.room.player_list:
+            if player.is_dead:
+                self.room.player_list.remove(player)
 
 
     def run_game_step(self):
@@ -77,6 +84,11 @@ class Game(object):
 
         self.remove_badguy_if_collision_with_orb()
         self.update_player_health()
+        self.remove_dead_players()
+
+
+        if self.no_more_players_left:
+            self.game_json = 1
 
         badguy_json = self.all_list_to_json(self.room.badguy_list)
         rect_json = self.all_list_to_json(self.room.rect_list)
@@ -89,7 +101,8 @@ class Game(object):
                               "rect_json":rect_json, 
                               "player_json":player_json, 
                               "orb_json":orb_json, 
-                              "room_json":room_json}) 
+                              "room_json":room_json,
+                              "game_json":self.game_json}) 
 
 
     def create_orbs_for_players(self, orb_x_direction, orb_y_direction, id):
@@ -114,8 +127,9 @@ class Game(object):
 
                         self.room.orb_list.append(AttackOrb(orb_x_center, orb_y_center, orb_x_direction, orb_y_direction, player.color))
 
-
-
+    @property
+    def no_more_players_left(self):
+        return len(self.room.player_list) <= 0
 
 
     def update_orb_position(self):
@@ -337,6 +351,10 @@ class Player(object):
             self.health -= amount
             self.last_damage_at = time()
             self.hearts = u'♥'*self.health + u'♡'*(3-self.health)
+
+    @property
+    def is_dead(self):
+        return self.health <= 0
 
 
 

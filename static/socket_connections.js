@@ -9,7 +9,7 @@ $(document).ready(function(){
 
 // $("black_box").append("<p class='startText' id='instructions4'>A,S,W,D TO MOVE</p>")
 // $("black_box").append("<p class='startText' id='instructions5'>ARROW KEYS TO CAST SPELLS</p>")
-
+$(".startText").show()
 
 
 //connection
@@ -50,6 +50,16 @@ socket.on('start_game_response', function(d) {
 socket.on('get_game_state_response', function(d) {
 
     update_canvas(d.badguy_json, d.rect_json, d.player_json, d.orb_json, d.room_json)
+
+    if (d.game_json > 0) {
+        console.log("game over")
+        $( ".bdiv").fadeIn( "slow", function() {
+            $( "#title").fadeIn( "slow", function() {
+
+
+            });
+        });
+    }
 
 });
 
